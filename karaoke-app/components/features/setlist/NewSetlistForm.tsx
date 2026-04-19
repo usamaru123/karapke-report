@@ -22,12 +22,11 @@ export function NewSetlistForm() {
     }
     startTransition(async () => {
       try {
-        await createSetlist({
+        const created = await createSetlist({
           name: trimmed,
           scheduledFor: scheduledFor || undefined,
         });
-        // NOTE: /setlists/[id] detail/edit lands in P4-07; for now return to the list.
-        router.push("/setlists");
+        router.push(`/setlists/${created.id}`);
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "作成に失敗しました");

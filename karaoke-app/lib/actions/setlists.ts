@@ -89,6 +89,16 @@ export async function deleteSetlistItem(itemId: string, setlistId: string) {
   revalidatePath(`/setlists/${setlistId}`);
 }
 
+export async function togglePinSetlist(setlistId: string, pinned: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("setlists")
+    .update({ is_pinned: pinned })
+    .eq("id", setlistId);
+  if (error) throw error;
+  revalidatePath("/setlists");
+}
+
 export async function deleteSetlist(setlistId: string) {
   const supabase = await createClient();
   const { error } = await supabase

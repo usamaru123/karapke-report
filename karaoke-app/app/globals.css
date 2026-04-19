@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-base: #0a0a14;
+  --color-bg-surface: #13132a;
+  --color-bg-elevated: #1c1c3a;
+  --color-neon-pink: #ff2a8a;
+  --color-neon-cyan: #00e5ff;
+  --color-neon-purple: #a855f7;
+  --color-neon-green: #00ff9d;
+  --color-neon-amber: #ffb300;
+
+  --shadow-glow-pink: 0 0 12px rgba(255, 42, 138, 0.6), 0 0 24px rgba(255, 42, 138, 0.3);
+  --shadow-glow-cyan: 0 0 12px rgba(0, 229, 255, 0.6);
+  --shadow-glow-pink-soft: 0 0 16px rgba(255, 42, 138, 0.4), inset 0 0 8px rgba(255, 42, 138, 0.1);
+
+  --font-sans: Inter, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: #0a0a14;
+  color: #ffffff;
+  font-family: var(--font-sans);
+}
+
+.tabular-nums {
+  font-feature-settings: "tnum";
+}
+
+.neon-text-pink {
+  text-shadow:
+    0 0 12px rgba(255, 42, 138, 0.6),
+    0 0 24px rgba(255, 42, 138, 0.3);
+}
+
+.neon-text-cyan {
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+}

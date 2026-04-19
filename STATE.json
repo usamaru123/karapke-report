@@ -1,0 +1,34 @@
+{
+  "current_phase": 4,
+  "current_task": "P4-01",
+  "task_status": {
+    "P1-01": { "status": "done", "completed_by": "human", "completed_at": "2026-04-19T14:00:00Z", "notes": "Supabase project hgnfhhjhontwappkvdga" },
+    "P1-02": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:10:00Z", "attempts": 1, "notes": "Schema verified 5/5 MUST" },
+    "P1-03": { "status": "done", "completed_by": "human", "completed_at": "2026-04-19T14:05:00Z" },
+    "P1-04": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:25:00Z", "attempts": 3, "notes": "Dry-Run 200/200 parsed after parser fixes" },
+    "P1-05": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:25:00Z", "attempts": 1, "notes": "Parser fixes in dam_client.py + parser.py (namespace + attr mapping)" },
+    "P1-06": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:28:00Z", "notes": "200 scores, 90 songs, 9 sessions, all SHOULD pass" },
+    "P1-07": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:30:00Z", "notes": "2nd sync New=0 Skipped=200" },
+    "P2-01": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:40:00Z", "attempts": 2, "notes": "Next 16.2.4 via npx (pnpm dlx cache issue). React 19.2.4, Tailwind 4. build+type-check both exit 0." },
+    "P2-02": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:43:00Z", "notes": "Tailwind 4 CSS-first config: tokens in globals.css @theme (neon-pink/cyan/purple/green/amber + bg-base/surface/elevated + glow-pink/cyan shadows)" },
+    "P2-03": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:50:00Z", "notes": "lib/supabase/{server,client,middleware}.ts created. .env.local moved from project root to karaoke-app/ (user wrote to wrong path initially)." },
+    "P2-04": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:55:00Z", "notes": "middleware.ts: unauth→/login 307, /login→200. Note: Next 16 returns 307 (not 302 as spec said) — semantically equivalent." },
+    "P2-05": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:55:00Z", "notes": "(auth)/login/{page,actions}.tsx with useActionState + server action signInWithPassword. Login success flow not yet HTTP-verified (needs password from user)." },
+    "P2-06": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T14:55:00Z", "notes": "(app)/layout.tsx + BottomNav/SideNav + 5 empty pages. Verified via Claude_Preview at 1440×900 (SideNav) and 747×577 (BottomNav)." },
+    "P3-01": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T15:05:00Z", "notes": "Custom type generator (scripts/gen_supabase_types.py) via psycopg2 + information_schema — avoids Docker/CLI dep. 9 tables + 3 enums. types/database.ts + types/domain.ts. supabase clients (server/client/middleware) all typed with <Database>." },
+    "P3-02": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T16:35:00Z", "attempts": 2, "notes": "getRepertoire + getRepertoireDetail. Initial impl used embedded select 'scores:scores(...)' which failed runtime (PGRST200 — no FK repertoire→scores). Refactored to fetch scores via separate .in('song_id',...) query and aggregate per song_id in JS. Smoke test via temp /api/smoke route confirmed. Also: fixed 2 ESLint no-unused-vars warnings." },
+    "P3-03": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T15:10:00Z", "notes": "lib/queries/dashboard.ts: getDashboardSummary + getHeroBest + getRecentScores." },
+    "P3-04": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T15:10:00Z", "notes": "lib/queries/history.ts: getHistoryWithSessions (period filter) + getScoresForSong." },
+    "P3-05": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T15:10:00Z", "notes": "lib/queries/setlists.ts: getSetlists + getSetlistDetail." },
+    "P3-06": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T16:35:00Z", "notes": "lib/actions/{repertoire,setlists,sync}.ts all with 'use server'. Smoke tested via POST /api/smoke/actions (since removed): 15-step round-trip (add/update/verify patch/remove repertoire + create/addx2/reorder/verify reorder/deletex2 items/delete setlist) — state restored to 0/0/0. reorderSetlistItems uses 2N UPDATEs (not transactional — flagged for future RPC fix)." },
+    "P3-07": { "status": "done", "completed_by": "agent", "completed_at": "2026-04-19T17:10:00Z", "attempts": 2, "notes": "Two-user empirical test completed via temp POST /api/rls-test (since removed): User A session via middleware cookies, User B via fresh @supabase/supabase-js signInWithPassword. 13 probes all PASS: (1) 7 user-scoped tables all 0 rows for User B, (2) profiles no User A leak, (3) songs shared catalog readable, (4) INSERT with User A uuid → 42501 RLS violation, (5) UPDATE/DELETE on User A's disposable row → 0 affected, (6) User A's row preserved with original memo post-tamper. Combined with earlier DB-level check (7/7 RLS ON, all policies have auth.uid() qual, anon vs service_role contrast): RLS MVP-complete. docs/data-model.md updated with repertoire↔scores schema note." }
+  },
+  "human_escalations": [],
+  "phase_1_completed_at": "2026-04-19T14:30:00Z",
+  "phase_2_completed_at": "2026-04-19T14:55:00Z",
+  "phase_3_completed_at": "2026-04-19T15:15:00Z",
+  "notes": [
+    "Stray secret file at C:\\Users\\shun\\Projects\\karaoke-report-web\\.env.local should be deleted (user wrote there initially, then relocated to karaoke-app/.env.local).",
+    "Next 16 breaking changes noted: middleware deprecated in favor of proxy (but still works); using middleware for Supabase SSR compatibility."
+  ]
+}

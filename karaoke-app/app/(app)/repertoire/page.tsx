@@ -4,6 +4,7 @@ import { RepertoireList } from "@/components/features/repertoire/RepertoireList"
 import { SearchBar } from "@/components/features/repertoire/SearchBar";
 import { SortMenu } from "@/components/features/repertoire/SortMenu";
 import {
+  getAddableScoredSongs,
   getRepertoire,
   type RepertoireFilter,
   type RepertoireSort,
@@ -43,11 +44,10 @@ export default async function RepertoirePage({
   const sort = parseSort(sp.sort);
   const q = (sp.q ?? "").trim();
 
-  const items = await getRepertoire({
-    filter,
-    sort,
-    search: q || undefined,
-  });
+  const [items, addableSongs] = await Promise.all([
+    getRepertoire({ filter, sort, search: q || undefined }),
+    getAddableScoredSongs(),
+  ]);
 
   return (
     <div className="pb-24 md:pb-6">
@@ -73,7 +73,7 @@ export default async function RepertoirePage({
         clearSearchHref="/repertoire"
       />
 
-      <AddSongFab />
+      <AddSongFab addableSongs={addableSongs} />
     </div>
   );
 }

@@ -287,18 +287,18 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 ## ✅ Done (直近 20 件)
 
 ### 🔥 P0 UX バッチ (2026-04-22) — 9 件同時リリース
-- Completed: 2026-04-22 / (next commit)
+- Completed: 2026-04-22 / Commits: `2998241` (Home) + `0f6e8fc` (Repertoire) + `c791912` (Misc)
 - Labels: `UX`, `home`, `repertoire`, `history`, `navigation`
 
-1. **[UX-BOTTOMNAV-LABELS]** BottomNav のラベル常時表示は既存、「レパ」→「曲」リネーム
-2. **[UX-CONFIDENCE-OPTIMISTIC]** 既に楽観 UI 実装済を確認 (state 即時 → rollback)
-3. **[UX-HISTORY-SESSION-SUMMARY]** `SessionGroup` 見出しに 平均 / 最高 / 曲数
-4. **[UX-REPERTOIRE-SORT]** 4 → 8 種に拡充 (avg/count/growth/stability 追加)、`parseSort` export 化
-5. **[UX-REPERTOIRE-DYNAMIC-BADGES]** 「あと N 点でベスト」「N 日歌ってない」badge
-6. **[UX-REPERTOIRE-SPARKLINE]** 自前 SVG `<Sparkline>` component、カード右上に直近 5 件折れ線
-7. **[UX-FILTER-SUMMARY-BAR]** 適用中フィルタ chip + 件数 + 一括クリア、フィルタ無しでは非表示
-8. **[UX-HOME-NEXT-SESSION]** `getNextScheduledSetlist()` query + `NextSessionBanner` (今日/明日/あと N 日)
-9. **[UX-HOME-SPARKLINE]** `getMonthlyKpiTrend(6)` query + KpiGrid 4 タイルに 6ヶ月スパークライン + 前月差分
+1. **[UX-BOTTOMNAV-LABELS]** `c791912` — BottomNav のラベル常時表示は既存、「レパ」→「曲」リネーム
+2. **[UX-CONFIDENCE-OPTIMISTIC]** 検証のみ — 既に楽観 UI 実装済を確認 (state 即時 → rollback)
+3. **[UX-HISTORY-SESSION-SUMMARY]** `c791912` — `SessionGroup` 見出しに 平均 / 最高 / 曲数
+4. **[UX-REPERTOIRE-SORT]** `0f6e8fc` — 4 → 8 種に拡充 (avg/count/growth/stability 追加)、`parseSort` export 化
+5. **[UX-REPERTOIRE-DYNAMIC-BADGES]** `0f6e8fc` — 「あと N 点でベスト」「N 日歌ってない」badge
+6. **[UX-REPERTOIRE-SPARKLINE]** `0f6e8fc` — 自前 SVG `<Sparkline>` component、カード右上に直近 5 件折れ線
+7. **[UX-FILTER-SUMMARY-BAR]** `0f6e8fc` — 適用中フィルタ chip + 件数 + 一括クリア、フィルタ無しでは非表示
+8. **[UX-HOME-NEXT-SESSION]** `2998241` — `getNextScheduledSetlist()` query + `NextSessionBanner` (今日/明日/あと N 日)
+9. **[UX-HOME-SPARKLINE]** `2998241` — `getMonthlyKpiTrend(6)` query + KpiGrid 4 タイルに 6ヶ月スパークライン + 前月差分
 
 データ層拡張: `RepertoireWithMeta` に `avg_score` / `score_count` / `std_score` / `growth_score` /
 `recent_scores` / `days_since_last_sung` を追加。`Date.now()` は query 層でスナップして render 側は純粋に。

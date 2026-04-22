@@ -5,11 +5,22 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createSetlist } from "@/lib/actions/setlists";
 
-export function NewSetlistForm() {
+type TemplateOption = {
+  id: string;
+  name: string;
+  itemCount: number;
+};
+
+type Props = {
+  templates: TemplateOption[];
+};
+
+export function NewSetlistForm({ templates }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
+  const [fromTemplateId, setFromTemplateId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
@@ -25,6 +36,7 @@ export function NewSetlistForm() {
         const created = await createSetlist({
           name: trimmed,
           scheduledFor: scheduledFor || undefined,
+          fromTemplateId: fromTemplateId || undefined,
         });
         router.push(`/setlists/${created.id}`);
         router.refresh();
@@ -57,6 +69,28 @@ export function NewSetlistForm() {
           className="rounded-md border border-white/10 bg-bg-elevated px-3 py-2 text-white outline-none focus:border-neon-cyan"
         />
       </label>
+
+      {templates.length > 0 && (
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-white/60">
+            テンプレから作成 (任意)
+          </span>
+          <select
+            value={fromTemplateId}
+            onChange={(e) => setFromTemplateId(e.target.value)}
+            className="rounded-md border border-white/10 bg-bg-elevated px-3 py-2 text-white outline-none focus:border-neon-cyan"
+          >
+            <option value="" className="bg-bg-elevated">
+              — 空のセトリ —
+            </option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id} className="bg-bg-elevated">
+                {t.name} ({t.itemCount} 曲)
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {error && (
         <p className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">

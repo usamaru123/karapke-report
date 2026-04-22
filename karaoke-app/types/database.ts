@@ -287,6 +287,8 @@ export type Database = {
           description: string | null
           scheduled_for: string | null
           is_pinned: boolean
+          is_template: boolean
+          template_source_id: string | null
           created_at: string
           updated_at: string
         };
@@ -297,6 +299,8 @@ export type Database = {
           description?: string | null
           scheduled_for?: string | null
           is_pinned?: boolean
+          is_template?: boolean
+          template_source_id?: string | null
           created_at?: string
           updated_at?: string
         };
@@ -307,6 +311,8 @@ export type Database = {
           description?: string | null
           scheduled_for?: string | null
           is_pinned?: boolean
+          is_template?: boolean
+          template_source_id?: string | null
           created_at?: string
           updated_at?: string
         };

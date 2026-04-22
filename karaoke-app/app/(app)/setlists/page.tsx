@@ -1,11 +1,14 @@
-import { Plus } from "lucide-react";
+import { BookTemplate, Plus } from "lucide-react";
 import Link from "next/link";
 import { SetlistEmptyState } from "@/components/features/setlist/EmptyState";
 import { SetlistCard } from "@/components/features/setlist/SetlistCard";
 import { getSetlists } from "@/lib/queries/setlists";
 
 export default async function SetlistsPage() {
-  const setlists = await getSetlists();
+  const [setlists, templates] = await Promise.all([
+    getSetlists(),
+    getSetlists({ templates: true }),
+  ]);
   const pinned = setlists.filter((s) => s.is_pinned);
   const saved = setlists.filter((s) => !s.is_pinned);
 
@@ -27,7 +30,7 @@ export default async function SetlistsPage() {
         </Link>
       </header>
 
-      {setlists.length === 0 ? (
+      {setlists.length === 0 && templates.length === 0 ? (
         <SetlistEmptyState />
       ) : (
         <>
@@ -51,6 +54,23 @@ export default async function SetlistsPage() {
               </h2>
               <div className="space-y-2">
                 {saved.map((s) => (
+                  <SetlistCard key={s.id} setlist={s} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {templates.length > 0 && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neon-amber">
+                <BookTemplate size={12} />
+                テンプレート
+              </h2>
+              <p className="mb-2 text-[11px] text-white/40">
+                「新規」→「テンプレから作成」で複製できます。
+              </p>
+              <div className="space-y-2">
+                {templates.map((s) => (
                   <SetlistCard key={s.id} setlist={s} />
                 ))}
               </div>

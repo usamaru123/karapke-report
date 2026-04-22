@@ -301,19 +301,29 @@ CREATE INDEX repertoire_tags        ON repertoire USING GIN (tags);
 -- User's saved setlists (playlists for a karaoke visit)
 -- ============================================================================
 CREATE TABLE setlists (
-  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id          UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id            UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
 
-  name             TEXT NOT NULL,
-  description      TEXT,
-  scheduled_for    DATE,          -- Planned visit date; nullable for templates
-  is_pinned        BOOLEAN NOT NULL DEFAULT FALSE,
+  name               TEXT NOT NULL,
+  description        TEXT,
+  scheduled_for      DATE,          -- Planned visit date; nullable for templates
+  is_pinned          BOOLEAN NOT NULL DEFAULT FALSE,
 
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  -- Template flag: when TRUE the row is a reusable preset, hidden from the
+  -- main setlists list and offered as "copy from" source for new setlists.
+  -- Migration 009 introduced this column on the live DB.
+  is_template        BOOLEAN NOT NULL DEFAULT FALSE,
+  -- If this setlist was cloned from a template, pointer back at that
+  -- template. SET NULL on delete so the copied rows survive template removal.
+  template_source_id UUID REFERENCES setlists(id) ON DELETE SET NULL,
+
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX setlists_user ON setlists (user_id, is_pinned DESC, created_at DESC);
+CREATE INDEX setlists_templates ON setlists (user_id, is_template)
+  WHERE is_template = TRUE;
 
 
 -- ============================================================================

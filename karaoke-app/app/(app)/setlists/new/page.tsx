@@ -1,6 +1,14 @@
 import { NewSetlistForm } from "@/components/features/setlist/NewSetlistForm";
+import { getSetlists } from "@/lib/queries/setlists";
 
-export default function NewSetlistPage() {
+export default async function NewSetlistPage() {
+  const templates = await getSetlists({ templates: true });
+  const templateOptions = templates.map((t) => ({
+    id: t.id,
+    name: t.name,
+    itemCount: t.items.length,
+  }));
+
   return (
     <div className="mx-auto max-w-md px-4 pt-8 pb-24 md:pb-8">
       <h1 className="text-xl font-semibold text-white">
@@ -10,7 +18,7 @@ export default function NewSetlistPage() {
         名前を付けるだけで作成できます。曲の追加は次の画面で。
       </p>
       <div className="mt-6">
-        <NewSetlistForm />
+        <NewSetlistForm templates={templateOptions} />
       </div>
     </div>
   );

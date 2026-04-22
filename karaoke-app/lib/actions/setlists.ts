@@ -7,6 +7,12 @@ import { validateSetlistMetaPatch } from "@/lib/validation/setlists";
 export async function createSetlist(input: {
   name: string;
   scheduledFor?: string;
+  /**
+   * When provided, copy all items from the given template into the new
+   * setlist. The new row gets `template_source_id` set for traceability;
+   * it is itself NOT a template (`is_template=false`).
+   */
+  fromTemplateId?: string;
 }) {
   const supabase = await createClient();
   const {
@@ -14,18 +20,70 @@ export async function createSetlist(input: {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { data, error } = await supabase
+  const { data: created, error } = await supabase
     .from("setlists")
     .insert({
       user_id: user.id,
       name: input.name,
       scheduled_for: input.scheduledFor,
+      template_source_id: input.fromTemplateId ?? null,
     })
     .select()
     .single();
   if (error) throw error;
+
+  if (input.fromTemplateId) {
+    // Verify the template belongs to the caller + is actually a template.
+    const { data: tpl } = await supabase
+      .from("setlists")
+      .select("id, is_template, user_id")
+      .eq("id", input.fromTemplateId)
+      .maybeSingle();
+    if (tpl && tpl.is_template && tpl.user_id === user.id) {
+      const { data: items } = await supabase
+        .from("setlist_items")
+        .select("song_id, position, key_override, note")
+        .eq("setlist_id", input.fromTemplateId)
+        .order("position", { ascending: true });
+      if (items && items.length > 0) {
+        const clones = items.map((it, i) => ({
+          setlist_id: created.id,
+          user_id: user.id,
+          song_id: it.song_id,
+          // Repack positions 0..N-1 defensively in case the template had gaps.
+          position: i,
+          key_override: it.key_override,
+          note: it.note,
+        }));
+        const { error: cloneErr } = await supabase
+          .from("setlist_items")
+          .insert(clones);
+        if (cloneErr) throw cloneErr;
+      }
+    }
+  }
+
   revalidatePath("/setlists");
-  return data;
+  return created;
+}
+
+/**
+ * Toggle a setlist's `is_template` flag. Flipping TRUE hides it from the
+ * main /setlists list and surfaces it under the "テンプレート" section /
+ * dropdown. Flipping FALSE turns a template back into a regular setlist.
+ */
+export async function toggleSetlistTemplate(
+  setlistId: string,
+  isTemplate: boolean,
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("setlists")
+    .update({ is_template: isTemplate })
+    .eq("id", setlistId);
+  if (error) throw error;
+  revalidatePath("/setlists");
+  revalidatePath(`/setlists/${setlistId}`);
 }
 
 export async function addItemToSetlist(setlistId: string, songId: string) {

@@ -1,18 +1,35 @@
 "use client";
 
-import { Check, ChevronLeft, Pencil, Trash2, X } from "lucide-react";
+import {
+  BookTemplate,
+  Check,
+  ChevronLeft,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { deleteSetlist, updateSetlistMeta } from "@/lib/actions/setlists";
+import {
+  deleteSetlist,
+  toggleSetlistTemplate,
+  updateSetlistMeta,
+} from "@/lib/actions/setlists";
 
 type Props = {
   setlistId: string;
   name: string;
   scheduledFor: string | null;
+  isTemplate: boolean;
 };
 
-export function SetlistHeader({ setlistId, name, scheduledFor }: Props) {
+export function SetlistHeader({
+  setlistId,
+  name,
+  scheduledFor,
+  isTemplate,
+}: Props) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -60,6 +77,13 @@ export function SetlistHeader({ setlistId, name, scheduledFor }: Props) {
     });
   }
 
+  function handleToggleTemplate() {
+    startTransition(async () => {
+      await toggleSetlistTemplate(setlistId, !isTemplate);
+      router.refresh();
+    });
+  }
+
   return (
     <>
       <header className="flex items-center justify-between gap-2 pt-4 pb-2">
@@ -74,14 +98,30 @@ export function SetlistHeader({ setlistId, name, scheduledFor }: Props) {
           {name}
         </h1>
         {!editing && (
-          <button
-            type="button"
-            aria-label="セットリストを編集"
-            onClick={startEdit}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
-          >
-            <Pencil size={16} />
-          </button>
+          <>
+            <button
+              type="button"
+              aria-label={isTemplate ? "テンプレート解除" : "テンプレート化"}
+              aria-pressed={isTemplate}
+              onClick={handleToggleTemplate}
+              disabled={isPending}
+              className={`flex h-9 w-9 items-center justify-center rounded-md ${
+                isTemplate
+                  ? "bg-neon-amber/15 text-neon-amber"
+                  : "text-white/70 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <BookTemplate size={16} />
+            </button>
+            <button
+              type="button"
+              aria-label="セットリストを編集"
+              onClick={startEdit}
+              className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+            >
+              <Pencil size={16} />
+            </button>
+          </>
         )}
         <button
           type="button"
@@ -92,6 +132,12 @@ export function SetlistHeader({ setlistId, name, scheduledFor }: Props) {
           <Trash2 size={16} />
         </button>
       </header>
+
+      {isTemplate && !editing && (
+        <p className="pl-10 text-[11px] text-neon-amber/80">
+          テンプレート中 · 新規セトリ作成時にコピー元として選べます
+        </p>
+      )}
 
       {!editing && scheduledFor && (
         <p className="pl-10 text-xs text-white/50 tabular-nums">

@@ -101,6 +101,7 @@ export function SetlistEditor({ setlist, repertoire }: Props) {
         setlistId={setlist.id}
         name={setlist.name}
         scheduledFor={setlist.scheduled_for}
+        isTemplate={setlist.is_template}
       />
 
       <section className="mt-4 space-y-2">

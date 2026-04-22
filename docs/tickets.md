@@ -101,25 +101,6 @@ Stage 0 で 5 サンプル検証した時点では「その歌唱の到達可能
 
 ## 📋 Backlog
 
-### [PERF-SYNC-INCR] インクリメンタル同期で手動取り込みを高速化
-- Created: 2026-04-22 / Updated: 2026-04-22
-- Priority: **high**
-- Labels: `PERF`, `edge-function`
-- 参照: `docs/tech-research/20260422-sync-performance.md`
-
-既存 `scores` の最大 `dam_scoring_id` を事前取得し、page 1 で既知 id に
-到達したら `iterAll` を打ち切る。日次 cron で ~60s → ~1-2s、手動ボタン
-同様の改善。受入: 全件スキップ時の合計所要 ≤ 3s。
-
-### [FEAT-SETLIST-TEMPLATE] セトリテンプレ化
-- Created: 2026-04-22 / Updated: 2026-04-22
-- Priority: medium
-- Labels: `FEAT`, `DB-migration`
-
-「盛り上げ系」「バラード系」のような保存可能テンプレ。セトリ UI から
-保存ボタン + テンプレ選択ダイアログ。`setlists.is_template BOOLEAN` 追加
-+ `setlists.template_source_id UUID` でどのテンプレから複製したか追跡。
-
 ### [FEAT-SUGGEST-CLAUDE] オススメ曲 (Claude API 連携)
 - Created: 2026-04-22 / Updated: 2026-04-22
 - Priority: medium
@@ -173,6 +154,29 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 ---
 
 ## ✅ Done (直近 20 件)
+
+### [PERF-SYNC-INCR] インクリメンタル同期で手動取り込みを高速化
+- Completed: 2026-04-22 / (next commit)
+- Labels: `PERF`, `edge-function`
+- 参照: `docs/tech-research/20260422-sync-performance.md`
+
+`sync.ts` に `incremental` オプション (default true) を追加。ユーザの既知
+`dam_scoring_id` を事前 Set 化し、`iterAll` ループ中で consecutive 既知 hit
+が `incrementalStopAfter`(=1) に達したら早期 break。全件既知なら page 1 の
+最初のレコードで打ち切りでき、DB 側の UNIQUE 制約は backup safety net として
+維持。`SyncResult` に `stopped_early` 追加。
+
+### [FEAT-SETLIST-TEMPLATE] セトリテンプレ化
+- Completed: 2026-04-22 / (next commit)
+- Labels: `FEAT`, `DB-migration`
+
+migration 009 で `setlists.is_template BOOLEAN` + `setlists.template_source_id
+UUID` 追加 (+ 部分 index `setlists_templates`)。`createSetlist` に
+`fromTemplateId` を足して setlist_items を position 0..N-1 で複製。
+`toggleSetlistTemplate` action 新設。`/setlists` ページは 3 セクション
+(pinned / saved / templates) に再構成、`/setlists/new` にテンプレドロップダウン、
+SetlistHeader にテンプレ化 toggle (BookTemplate icon) + バナーを追加。
+**要 Supabase SQL Editor で migration 009 適用**。
 
 ### [UX-ADDSONG-HISTORY-TAB-REMOVE] 曲追加モーダルから「採点履歴から」タブ削除
 - Completed: 2026-04-22 / (next commit)

@@ -15,8 +15,12 @@ export type SetlistWithItems = Setlist & {
 
 const DEFAULT_SONG_SECONDS = 240;
 
-export async function getSetlists(): Promise<SetlistWithItems[]> {
+export async function getSetlists(opts?: {
+  /** `false` excludes templates (default), `true` returns templates only. */
+  templates?: boolean;
+}): Promise<SetlistWithItems[]> {
   const supabase = await createClient();
+  const wantTemplates = opts?.templates ?? false;
   const { data, error } = await supabase
     .from("setlists")
     .select(
@@ -28,6 +32,7 @@ export async function getSetlists(): Promise<SetlistWithItems[]> {
       )
     `,
     )
+    .eq("is_template", wantTemplates)
     .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false });
 

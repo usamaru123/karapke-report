@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { AlertCircle, Check, Download } from "lucide-react";
 import { useState, useTransition } from "react";
-import { triggerSync } from "@/lib/actions/sync";
 
 type Props = { lastSyncAt: string | null };
 
@@ -25,11 +24,20 @@ export function SyncCard({ lastSyncAt }: Props) {
     setFeedback(null);
     startTransition(async () => {
       try {
-        const result = await triggerSync();
+        // Go through the /api/sync route handler (maxDuration=60) instead of
+        // a Server Action because the Edge Function takes ~44s and Server
+        // Actions inherit the Next page's lower default timeout on Vercel.
+        const res = await fetch("/api/sync", { method: "POST" });
+        const body = await res.json();
+        if (!res.ok) {
+          throw new Error(
+            body?.detail ?? body?.error ?? `HTTP ${res.status}`,
+          );
+        }
         setFeedback({
           kind: "success",
-          fetched: result.fetched,
-          added: result.new,
+          fetched: body.fetched,
+          added: body.new,
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : "取り込み失敗";

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { SetlistEditor } from "@/components/features/setlist/SetlistEditor";
 import { getRepertoire } from "@/lib/queries/repertoire";
 import { getSetlistDetail } from "@/lib/queries/setlists";
+import { getUserVocalRange } from "@/lib/queries/user_range";
 
 export default async function SetlistDetailPage({
   params,
@@ -17,7 +18,16 @@ export default async function SetlistDetailPage({
     notFound();
   }
 
-  const repertoire = await getRepertoire();
+  const [repertoire, userRange] = await Promise.all([
+    getRepertoire(),
+    getUserVocalRange(),
+  ]);
 
-  return <SetlistEditor setlist={setlist} repertoire={repertoire} />;
+  return (
+    <SetlistEditor
+      setlist={setlist}
+      repertoire={repertoire}
+      userRange={userRange}
+    />
+  );
 }

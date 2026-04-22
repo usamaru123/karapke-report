@@ -17,14 +17,17 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   deleteSetlistItem,
   reorderSetlistItems,
 } from "@/lib/actions/setlists";
 import type { RepertoireWithMeta } from "@/lib/queries/repertoire";
 import type { SetlistDetail, SetlistDetailItem } from "@/lib/queries/setlists";
+import type { UserVocalRange } from "@/lib/queries/user_range";
+import { analyzeSetlistBalance } from "@/lib/setlist-balance";
 import { AddItemToSetlistButton } from "./AddItemToSetlistButton";
+import { BalanceWarnings } from "./BalanceWarnings";
 import { BottomSummary } from "./BottomSummary";
 import { RandomFillButton } from "./RandomFillButton";
 import { SetlistHeader } from "./SetlistHeader";
@@ -33,9 +36,10 @@ import { SortableSetlistItem } from "./SortableSetlistItem";
 type Props = {
   setlist: SetlistDetail;
   repertoire: RepertoireWithMeta[];
+  userRange: UserVocalRange;
 };
 
-export function SetlistEditor({ setlist, repertoire }: Props) {
+export function SetlistEditor({ setlist, repertoire, userRange }: Props) {
   const router = useRouter();
   const [items, setItems] = useState<SetlistDetailItem[]>(setlist.items);
   const [isPending, startTransition] = useTransition();
@@ -95,6 +99,26 @@ export function SetlistEditor({ setlist, repertoire }: Props) {
     items.map((i) => i.song?.id).filter((v): v is string => !!v),
   );
 
+  // Recompute on every drag/add/remove — cheap (N <= ~20).
+  const warnings = useMemo(
+    () =>
+      analyzeSetlistBalance(
+        items.map((it, idx) => ({
+          position: idx + 1,
+          song: it.song
+            ? {
+                id: it.song.id,
+                title: it.song.title,
+                vocal_range_lowest: it.song.vocal_range_lowest,
+                vocal_range_highest: it.song.vocal_range_highest,
+              }
+            : null,
+        })),
+        { low: userRange.low, high: userRange.high },
+      ),
+    [items, userRange.low, userRange.high],
+  );
+
   return (
     <div className="mx-auto max-w-3xl px-4 pb-40 md:pb-28">
       <SetlistHeader
@@ -103,6 +127,8 @@ export function SetlistEditor({ setlist, repertoire }: Props) {
         scheduledFor={setlist.scheduled_for}
         isTemplate={setlist.is_template}
       />
+
+      <BalanceWarnings warnings={warnings} />
 
       <section className="mt-4 space-y-2">
         {items.length === 0 ? (

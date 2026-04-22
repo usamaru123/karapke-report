@@ -3,7 +3,9 @@
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { AlertCircle, Check, Download } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type Props = { lastSyncAt: string | null };
 
@@ -13,6 +15,7 @@ type Feedback =
   | null;
 
 export function SyncCard({ lastSyncAt }: Props) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<Feedback>(null);
 
@@ -24,21 +27,23 @@ export function SyncCard({ lastSyncAt }: Props) {
     setFeedback(null);
     startTransition(async () => {
       try {
-        // Go through the /api/sync route handler (maxDuration=60) instead of
-        // a Server Action because the Edge Function takes ~44s and Server
-        // Actions inherit the Next page's lower default timeout on Vercel.
-        const res = await fetch("/api/sync", { method: "POST" });
-        const body = await res.json();
-        if (!res.ok) {
-          throw new Error(
-            body?.detail ?? body?.error ?? `HTTP ${res.status}`,
-          );
-        }
+        // Invoke the Edge Function directly from the browser. The Edge
+        // Function takes ~40s and Vercel Hobby Functions cap at 60s
+        // (FUNCTION_INVOCATION_TIMEOUT), so a Route Handler wrapper would
+        // 504 under network overhead. Browser fetch has no such cap, and the
+        // authenticated session attaches the user JWT automatically.
+        const supabase = createClient();
+        const { data, error } = await supabase.functions.invoke("sync-scores", {
+          body: {},
+        });
+        if (error) throw new Error(error.message);
+        const payload = data as { fetched: number; new: number };
         setFeedback({
           kind: "success",
-          fetched: body.fetched,
-          added: body.new,
+          fetched: payload.fetched,
+          added: payload.new,
         });
+        router.refresh();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "取り込み失敗";
         setFeedback({ kind: "error", message: msg });

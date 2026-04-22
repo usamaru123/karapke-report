@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
 import { DetailActions } from "@/components/features/repertoire/detail/DetailActions";
 import { DetailHeader } from "@/components/features/repertoire/detail/DetailHeader";
+import { KeyRecommendation } from "@/components/features/repertoire/detail/KeyRecommendation";
 import { MetaInfoPanel } from "@/components/features/repertoire/detail/MetaInfoPanel";
 import { ScoreHistoryChart } from "@/components/features/repertoire/detail/ScoreHistoryChart";
 import { ScoreRadarChart } from "@/components/features/repertoire/detail/ScoreRadarChart";
 import { ScoreSummaryCard } from "@/components/features/repertoire/detail/ScoreSummaryCard";
 import { SongInfoHero } from "@/components/features/repertoire/detail/SongInfoHero";
 import { VocalRangeBar } from "@/components/features/repertoire/detail/VocalRangeBar";
+import { recommendKey } from "@/lib/key-recommendation";
 import { getRepertoireDetail } from "@/lib/queries/repertoire";
 import { getUserVocalRange } from "@/lib/queries/user_range";
 
@@ -35,6 +37,12 @@ export default async function RepertoireDetailPage({
     sung_at: s.sung_at,
     total_score: Number(s.total_score),
   }));
+  const keyRec = recommendKey(
+    scores.map((s) => ({
+      key_control: s.key_control,
+      total_score: s.total_score,
+    })),
+  );
 
   return (
     <div className="mx-auto max-w-3xl pb-6">
@@ -96,6 +104,11 @@ export default async function RepertoireDetailPage({
           sampleSize={userRange.sampleSize}
         />
       </div>
+
+      <KeyRecommendation
+        recommendation={keyRec}
+        currentPreferredKey={repertoire.preferred_key}
+      />
 
       <div className="mt-2">
         <MetaInfoPanel repertoire={repertoire} editing={editing} />

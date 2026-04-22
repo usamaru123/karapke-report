@@ -43,6 +43,21 @@ describe("stripVersionMarkers", () => {
     expect(stripVersionMarkers("ビンテージ")).toBe("ビンテージ");
     expect(stripVersionMarkers("Hello World")).toBe("Hello World");
   });
+
+  it("strips markers in square brackets (half and full width)", () => {
+    expect(stripVersionMarkers("[プロオケ]ビンテージ")).toBe("ビンテージ");
+    expect(stripVersionMarkers("ビンテージ[良音]")).toBe("ビンテージ");
+    expect(stripVersionMarkers("楓［ガイドメロディ］")).toBe("楓");
+  });
+
+  it("strips mixed bracket/paren markers in one title", () => {
+    expect(stripVersionMarkers("Song [プロオケ] (生音)")).toBe("Song");
+  });
+
+  it("strips 良音 — a marker that only shows up in brackets", () => {
+    expect(stripVersionMarkers("星空[良音]")).toBe("星空");
+    expect(stripVersionMarkers("Song (良音)")).toBe("Song");
+  });
 });
 
 describe("canonicalTitleKey", () => {

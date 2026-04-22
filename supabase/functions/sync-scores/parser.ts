@@ -5,11 +5,12 @@
  */
 
 // Mirror of karaoke-app/lib/song-title.ts `stripVersionMarkers`.
-// Keep the MARKERS list in sync with the app-side source of truth; Deno and
-// Next TS can't share code directly across runtimes.
+// Keep the MARKERS list + delimiter set in sync with the app-side source of
+// truth; Deno and Next TS can't share code directly across runtimes.
 const VERSION_MARKERS = [
   "プロオケ",
   "生音",
+  "良音",
   "ガイドメロディ",
   "ガイド",
   "オリジナル",
@@ -31,7 +32,7 @@ function stripVersionMarkers(title: string): string {
   for (const marker of VERSION_MARKERS) {
     const escaped = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const pattern = new RegExp(
-      `\\s*[\\(（]\\s*${escaped}\\s*[\\)）]`,
+      `\\s*[\\(（\\[［]\\s*${escaped}\\s*[\\)）\\]］]`,
       "gi",
     );
     out = out.replace(pattern, "");

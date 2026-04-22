@@ -14,10 +14,13 @@
  * Pure functions — same input → same output, no I/O.
  */
 
-// Markers we strip. Case-insensitive; half / full-width parens both allowed.
+// Markers we strip. Case-insensitive; half / full-width parens AND brackets
+// ([…] / ［…］) are both recognised because DAM uses either form depending on
+// the field (`contentsName` → parens, `dContentsName` → brackets).
 const VERSION_MARKERS = [
   "プロオケ",
   "生音",
+  "良音",
   "ガイドメロディ",
   "ガイド",
   "オリジナル",
@@ -36,19 +39,17 @@ const VERSION_MARKERS = [
 ] as const;
 
 /**
- * Strip recognized version markers in (…) / （…）. Returns the canonical
- * title, preserving the original casing / spacing of the song portion.
+ * Strip recognized version markers wrapped in () / （） / [] / ［］.
+ * Returns the canonical title, preserving the original casing / spacing of
+ * the song portion. Runs one regex per marker so legit parenthetical content
+ * (e.g. "Song (English Version)") is left intact.
  */
 export function stripVersionMarkers(title: string): string {
   let out = title;
-  // Match both half-width and full-width parentheses wrapping any of the markers.
-  // We rebuild with a single regex per-marker so we don't accidentally strip
-  // legit parenthetical content like "(English Version)" of a song title.
   for (const marker of VERSION_MARKERS) {
-    // Escape regex specials in the marker, then allow optional leading/trailing whitespace.
     const escaped = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const pattern = new RegExp(
-      `\\s*[\\(（]\\s*${escaped}\\s*[\\)）]`,
+      `\\s*[\\(（\\[［]\\s*${escaped}\\s*[\\)）\\]］]`,
       "gi",
     );
     out = out.replace(pattern, "");

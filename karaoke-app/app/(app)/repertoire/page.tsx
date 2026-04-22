@@ -1,28 +1,16 @@
 import { AddSongFab } from "@/components/features/repertoire/AddSongFab";
 import { FilterChips } from "@/components/features/repertoire/FilterChips";
+import { FilterSummaryBar } from "@/components/features/repertoire/FilterSummaryBar";
 import { RepertoireList } from "@/components/features/repertoire/RepertoireList";
 import { SearchBar } from "@/components/features/repertoire/SearchBar";
 import { SortMenu } from "@/components/features/repertoire/SortMenu";
 import {
   getRepertoire,
   parseConfidenceFilter,
+  parseSort,
   parseStatusFilter,
-  type RepertoireSort,
 } from "@/lib/queries/repertoire";
 import { getUserVocalRange } from "@/lib/queries/user_range";
-
-const SORTS: readonly RepertoireSort[] = [
-  "best_score",
-  "recent",
-  "title",
-  "added",
-];
-
-function parseSort(v: string | undefined): RepertoireSort {
-  return (SORTS as readonly string[]).includes(v ?? "")
-    ? (v as RepertoireSort)
-    : "best_score";
-}
 
 export default async function RepertoirePage({
   searchParams,
@@ -58,6 +46,13 @@ export default async function RepertoirePage({
       </header>
 
       <FilterChips status={status} confidence={confidence} />
+
+      <FilterSummaryBar
+        status={status}
+        confidence={confidence}
+        search={q}
+        total={items.length}
+      />
 
       <div className="flex items-center justify-end px-4 py-2 text-xs">
         <SortMenu active={sort} />

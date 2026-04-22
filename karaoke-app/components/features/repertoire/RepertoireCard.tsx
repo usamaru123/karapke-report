@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ConfidenceQuickPick } from "@/components/features/repertoire/ConfidenceQuickPick";
+import { DynamicBadges } from "@/components/features/repertoire/DynamicBadges";
 import { KeyBadge } from "@/components/ui/KeyBadge";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
+import { Sparkline } from "@/components/ui/Sparkline";
 import { VocalRangeBadge } from "@/components/ui/VocalRangeBadge";
 import { formatShortDate } from "@/lib/format";
 import type { RepertoireWithMeta } from "@/lib/queries/repertoire";
@@ -42,8 +44,20 @@ export function RepertoireCard({ item, userRange }: Props) {
             <KeyBadge value={item.preferred_key} />
           </div>
         </div>
-        <ScoreBadge value={item.best_score} size="md" />
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <ScoreBadge value={item.best_score} size="md" />
+          {item.recent_scores.length >= 2 && (
+            <Sparkline
+              values={item.recent_scores}
+              width={64}
+              height={18}
+              ariaLabel={`直近 ${item.recent_scores.length} 回の推移`}
+            />
+          )}
+        </div>
       </div>
+
+      <DynamicBadges item={item} />
 
       <div className="relative z-10 mt-2 flex items-center justify-between gap-3">
         <div className="pointer-events-auto flex min-w-0 flex-wrap items-center gap-2">

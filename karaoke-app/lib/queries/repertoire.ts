@@ -3,7 +3,32 @@ import type { ConfidenceLevel, Repertoire, Score, Song } from "@/types/domain";
 
 export type RepertoireStatusFilter = "all" | "over90" | "recent" | "favorite";
 export type RepertoireConfidenceFilter = ConfidenceLevel | "any";
-export type RepertoireSort = "best_score" | "recent" | "title" | "added";
+export type RepertoireSort =
+  | "best_score"
+  | "recent"
+  | "title"
+  | "added"
+  | "avg"
+  | "count"
+  | "growth"
+  | "stability";
+
+const SORT_VALUES: readonly RepertoireSort[] = [
+  "best_score",
+  "recent",
+  "title",
+  "added",
+  "avg",
+  "count",
+  "growth",
+  "stability",
+];
+
+export function parseSort(v: string | undefined): RepertoireSort {
+  return (SORT_VALUES as readonly string[]).includes(v ?? "")
+    ? (v as RepertoireSort)
+    : "best_score";
+}
 
 const STATUS_VALUES: readonly RepertoireStatusFilter[] = [
   "all",
@@ -38,6 +63,18 @@ export type RepertoireWithMeta = Repertoire & {
   song: Song;
   best_score: number | null;
   last_sung_at: string | null;
+  /** Average across all scores for the song. */
+  avg_score: number | null;
+  /** Total score count (how many times sung). */
+  score_count: number;
+  /** Population standard deviation of scores. Null when <2 scores. */
+  std_score: number | null;
+  /** Growth = last - first (chronological). Null when <2 scores. */
+  growth_score: number | null;
+  /** Most recent up-to-5 total_scores, ordered oldest→newest (for sparkline). */
+  recent_scores: number[];
+  /** Whole days since `last_sung_at` at query time. Null when never sung. */
+  days_since_last_sung: number | null;
 };
 
 type RepertoireRow = Repertoire & {
@@ -72,34 +109,68 @@ export async function getRepertoire(opts?: {
   );
 
   const songIds = withSong.map((r) => r.song.id);
-  const statsBySong = new Map<string, { best: number; last: string }>();
+  // Pull all (song_id, total, sung_at) rows in one shot, then aggregate
+  // client-side. Cheaper than N subqueries and we get sparkline + std + growth
+  // for free. At 200 scores × 50 songs this is trivial.
+  const rowsBySong = new Map<string, Array<{ total: number; sungAt: string }>>();
 
   if (songIds.length > 0) {
     const { data: scoreRows, error: scoreErr } = await supabase
       .from("scores")
       .select("song_id, total_score, sung_at")
-      .in("song_id", songIds);
+      .in("song_id", songIds)
+      .order("sung_at", { ascending: true });
     if (scoreErr) throw scoreErr;
     for (const s of scoreRows ?? []) {
-      const prev = statsBySong.get(s.song_id);
-      const total = Number(s.total_score);
-      if (!prev) {
-        statsBySong.set(s.song_id, { best: total, last: s.sung_at });
-      } else {
-        statsBySong.set(s.song_id, {
-          best: Math.max(prev.best, total),
-          last: prev.last > s.sung_at ? prev.last : s.sung_at,
-        });
-      }
+      const list = rowsBySong.get(s.song_id) ?? [];
+      list.push({ total: Number(s.total_score), sungAt: s.sung_at });
+      rowsBySong.set(s.song_id, list);
     }
   }
 
+  // Snapshot "now" once per request so every row shares the same frame.
+  const nowMs = Date.now();
   const enriched: RepertoireWithMeta[] = withSong.map((r) => {
-    const stats = statsBySong.get(r.song.id);
+    const rows = rowsBySong.get(r.song.id) ?? [];
+    if (rows.length === 0) {
+      return {
+        ...r,
+        best_score: null,
+        last_sung_at: null,
+        avg_score: null,
+        score_count: 0,
+        std_score: null,
+        growth_score: null,
+        recent_scores: [],
+        days_since_last_sung: null,
+      } as RepertoireWithMeta;
+    }
+    const totals = rows.map((x) => x.total);
+    const best = Math.max(...totals);
+    const last = rows[rows.length - 1];
+    const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
+    const std =
+      totals.length >= 2
+        ? Math.sqrt(
+            totals.reduce((a, v) => a + (v - avg) ** 2, 0) / totals.length,
+          )
+        : null;
+    const growth =
+      totals.length >= 2 ? totals[totals.length - 1] - totals[0] : null;
+    const recent = totals.slice(-5);
+    const daysSince = Math.floor(
+      (nowMs - new Date(last.sungAt).getTime()) / 86_400_000,
+    );
     return {
       ...r,
-      best_score: stats?.best ?? null,
-      last_sung_at: stats?.last ?? null,
+      best_score: best,
+      last_sung_at: last.sungAt,
+      avg_score: avg,
+      score_count: totals.length,
+      std_score: std,
+      growth_score: growth,
+      recent_scores: recent,
+      days_since_last_sung: daysSince,
     } as RepertoireWithMeta;
   });
 
@@ -136,6 +207,28 @@ export async function getRepertoire(opts?: {
       break;
     case "added":
       filtered.sort((a, b) => b.added_at.localeCompare(a.added_at));
+      break;
+    case "avg":
+      filtered.sort((a, b) => (b.avg_score ?? -1) - (a.avg_score ?? -1));
+      break;
+    case "count":
+      filtered.sort((a, b) => b.score_count - a.score_count);
+      break;
+    case "growth":
+      // Null (too few data) sinks to bottom.
+      filtered.sort(
+        (a, b) =>
+          (b.growth_score ?? Number.NEGATIVE_INFINITY) -
+          (a.growth_score ?? Number.NEGATIVE_INFINITY),
+      );
+      break;
+    case "stability":
+      // Lower std = more stable = ranks higher. Null sinks to bottom.
+      filtered.sort(
+        (a, b) =>
+          (a.std_score ?? Number.POSITIVE_INFINITY) -
+          (b.std_score ?? Number.POSITIVE_INFINITY),
+      );
       break;
   }
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FindingCard } from "@/components/features/advice/FindingCard";
 import { ScoreRadarChart } from "@/components/features/repertoire/detail/ScoreRadarChart";
 import { MonthlyTrendChart } from "@/components/features/stats/MonthlyTrendChart";
+import { SongOrderChart } from "@/components/features/stats/SongOrderChart";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
 import { buildHistoryInput } from "@/lib/advice/build-history-input";
 import { diagnoseHistoryOverall } from "@/lib/advice/diagnose-history";
@@ -13,6 +14,7 @@ import {
   getMonthlySummary,
   getMonthlyTrend,
   getOverallAxisAverages,
+  getSongOrderPerformance,
   getTopSongsByBest,
 } from "@/lib/queries/stats";
 
@@ -73,14 +75,16 @@ function deriveInsights(
 }
 
 export default async function StatsPage() {
-  const [summary, trend, axes, topSongs, aggData, votes] = await Promise.all([
-    getMonthlySummary(),
-    getMonthlyTrend(12),
-    getOverallAxisAverages(),
-    getTopSongsByBest(10),
-    getAggregateAdviceData(),
-    getMyAdviceVotes(),
-  ]);
+  const [summary, trend, axes, topSongs, aggData, votes, songOrder] =
+    await Promise.all([
+      getMonthlySummary(),
+      getMonthlyTrend(12),
+      getOverallAxisAverages(),
+      getTopSongsByBest(10),
+      getAggregateAdviceData(),
+      getMyAdviceVotes(),
+      getSongOrderPerformance(),
+    ]);
 
   const insights = deriveInsights(summary, axes);
 
@@ -156,6 +160,13 @@ export default async function StatsPage() {
           月別推移 (過去 12 ヶ月)
         </h2>
         <MonthlyTrendChart points={trend} />
+      </section>
+
+      <section className="mx-4 mt-4 rounded-xl border border-white/10 bg-bg-surface p-3">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/50">
+          曲順別 平均点 (喉の温まり曲線)
+        </h2>
+        <SongOrderChart data={songOrder} />
       </section>
 
       <section className="mx-4 mt-4 rounded-xl border border-white/10 bg-bg-surface p-3">

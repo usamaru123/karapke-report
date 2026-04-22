@@ -211,6 +211,113 @@ export async function getMonthlyKpiTrend(
   return out;
 }
 
+export type SongOrderPoint = {
+  /** 1-indexed song position within a session. */
+  position: number;
+  /** Arithmetic mean of total_score at this position across all sessions. */
+  mean: number;
+  /** Median total_score, more robust to one-off highs/lows. */
+  median: number;
+  /** Maximum total_score ever achieved at this position. */
+  max: number;
+  /** Number of sessions that had a song at this position. */
+  sampleSize: number;
+};
+
+export type SongOrderPerformance = {
+  points: SongOrderPoint[];
+  /** Position with highest mean score, min sample size 3. Null if insufficient data. */
+  peakPosition: { position: number; mean: number; sampleSize: number } | null;
+  /** Total sessions included (≥ minSessionSize songs). */
+  includedSessionCount: number;
+};
+
+/**
+ * Aggregate `total_score` by 1-indexed song position within each session.
+ * Answers "at which song into the night am I warmed up?".
+ *
+ * Sessions with fewer than `minSessionSize` (default 2) songs are skipped —
+ * we can't learn about ordering from a single-song session.
+ *
+ * Positions beyond `maxPosition` (default 10) are dropped so the chart stays
+ * readable; long sessions are rare and late-session samples are thin.
+ */
+export async function getSongOrderPerformance(opts?: {
+  minSessionSize?: number;
+  maxPosition?: number;
+}): Promise<SongOrderPerformance> {
+  const minSessionSize = opts?.minSessionSize ?? 2;
+  const maxPosition = opts?.maxPosition ?? 10;
+
+  const supabase = await createClient();
+
+  // Pull non-null-session scores. Loose scores (session_id = NULL) can't be
+  // ordered, so we skip them rather than fake a position.
+  const { data, error } = await supabase
+    .from("scores")
+    .select("session_id, sung_at, total_score")
+    .not("session_id", "is", null)
+    .order("session_id", { ascending: true })
+    .order("sung_at", { ascending: true });
+  if (error) throw error;
+
+  // Group by session, then assign position within session.
+  const bySession = new Map<string, { sungAt: string; total: number }[]>();
+  for (const r of data ?? []) {
+    const sid = r.session_id as string;
+    const list = bySession.get(sid) ?? [];
+    list.push({ sungAt: r.sung_at as string, total: Number(r.total_score) });
+    bySession.set(sid, list);
+  }
+
+  const byPosition = new Map<number, number[]>();
+  let includedSessionCount = 0;
+  for (const [, rows] of bySession) {
+    if (rows.length < minSessionSize) continue;
+    includedSessionCount++;
+    // rows already sorted by sung_at (via ORDER BY above)
+    for (let i = 0; i < rows.length && i < maxPosition; i++) {
+      const pos = i + 1;
+      const bucket = byPosition.get(pos) ?? [];
+      bucket.push(rows[i].total);
+      byPosition.set(pos, bucket);
+    }
+  }
+
+  const points: SongOrderPoint[] = [];
+  for (let pos = 1; pos <= maxPosition; pos++) {
+    const bucket = byPosition.get(pos);
+    if (!bucket || bucket.length === 0) continue;
+    const sorted = [...bucket].sort((a, b) => a - b);
+    const mean = bucket.reduce((a, b) => a + b, 0) / bucket.length;
+    // Median: even → avg of middle two, odd → middle.
+    const mid = sorted.length >> 1;
+    const median =
+      sorted.length % 2 === 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid];
+    const max = sorted[sorted.length - 1];
+    points.push({
+      position: pos,
+      mean,
+      median,
+      max,
+      sampleSize: bucket.length,
+    });
+  }
+
+  // Find the sweet-spot position. Require ≥ 3 samples to be meaningful.
+  let peak: SongOrderPerformance["peakPosition"] = null;
+  for (const p of points) {
+    if (p.sampleSize < 3) continue;
+    if (!peak || p.mean > peak.mean) {
+      peak = { position: p.position, mean: p.mean, sampleSize: p.sampleSize };
+    }
+  }
+
+  return { points, peakPosition: peak, includedSessionCount };
+}
+
 export type TopSong = {
   song_id: string;
   title: string;

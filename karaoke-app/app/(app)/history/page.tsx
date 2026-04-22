@@ -1,6 +1,8 @@
+import { Clock } from "lucide-react";
 import { HistoryToolbar } from "@/components/features/history/HistoryToolbar";
 import { InfoBanner } from "@/components/features/history/InfoBanner";
 import { SessionGroup } from "@/components/features/history/SessionGroup";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   getHistoryWithSessions,
   parseHistoryRange,
@@ -37,9 +39,27 @@ export default async function HistoryPage({
       <HistoryToolbar range={range} sort={sort} initialQuery={q} />
 
       {sessions.length === 0 ? (
-        <p className="px-6 py-16 text-center text-sm text-white/50">
-          条件に合う歌唱データがありません。
-        </p>
+        <div className="px-4 py-8">
+          <EmptyState
+            icon={Clock}
+            title={
+              q || range !== "all"
+                ? "条件に合う歌唱データがありません"
+                : "まだ歌唱データがありません"
+            }
+            description={
+              q || range !== "all"
+                ? "検索語・期間・ソートを変えて試してください。"
+                : "DAM カードを登録して同期すると、自動で履歴が表示されます。"
+            }
+            primary={
+              q || range !== "all"
+                ? { label: "条件をクリア", href: "/history" }
+                : { label: "同期設定を開く", href: "/settings" }
+            }
+            variant="plain"
+          />
+        </div>
       ) : (
         <div>
           {sessions.map((session) => (

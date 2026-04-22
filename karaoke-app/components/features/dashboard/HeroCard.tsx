@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Sparkles } from "lucide-react";
+import { Mic2, Sparkles } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { HeroBest } from "@/lib/queries/dashboard";
 import { formatScore } from "@/lib/format";
 
@@ -11,12 +12,12 @@ export function HeroCard({ hero }: Props) {
 
   if (!current) {
     return (
-      <section className="rounded-2xl border border-white/10 bg-bg-surface p-6 text-center">
-        <p className="text-xs text-white/50">自己ベスト (今月)</p>
-        <p className="mt-3 text-sm text-white/60">
-          今月の歌唱データがまだありません。カラオケで歌ってから取り込んでください。
-        </p>
-      </section>
+      <EmptyState
+        icon={Mic2}
+        title="今月はまだ歌唱データがありません"
+        description="カラオケで歌って設定で取り込むと、自己ベストがここに表示されます。"
+        primary={{ label: "同期設定を開く", href: "/settings" }}
+      />
     );
   }
 

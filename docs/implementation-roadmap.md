@@ -201,3 +201,76 @@ Claude Code を使えば Phase 2-5 は大幅短縮可能。人間の判断が必
 | Supabase 無料枠超過 | 低（個人用途） | 低 | Pro プランへの移行パス確保 |
 | Vercel Cron 無料枠制限 | 低 | 低 | GitHub Actions にフォールバック可 |
 | 単一ユーザーから多人数化したい | 低 | 中 | マルチテナント設計済み、RLS 有効 |
+
+---
+
+## Progress Log
+
+作業ごとに日付セクションを追記。**完了** / **未着手** / **ブロック中** の 3 区分で把握。
+詳細は設計書や commit 履歴に譲り、ここは一望性を優先した要約に留める。
+
+### 2026-04-22 セッション
+
+#### ✅ 完了
+
+**Phase 6 柱 A (店頭実用化)**
+- A1: PWA 化 (manifest, icons, service worker, iOS PWA 対応)
+- A2: 音域マッチング (evaluateVocalRange → fits / key_tweak / hard / unknown)
+- A3: 推奨 KEY (recommendKey: avg 最優先 + best/count tie-break)
+
+**Auth hardening (ブロッカー 3 件)**
+- #1 パスワード再発行フロー (/forgot → /auth/callback PKCE → /reset → /login?reset=1)
+- #2 loading.tsx / (app)/error.tsx / global-error.tsx (Next 16.2 unstable_retry 対応)
+- #3 オンボーディングバナー (cdm_card_no 未登録時に Dashboard で案内)
+
+**Settings polish (🟡 ゾーン 4 件)**
+- #4 表示名編集 (setDisplayName + DisplayNameForm, RLS 経由)
+- #5 セットリスト rename + 開催日編集 (updateSetlistMeta, YYYY-MM-DD 厳格検証)
+- #6 同期ログ閲覧画面 (/settings/sync-logs, 直近 30 件, status 別アイコン)
+- #7 cron 失敗 Discord 通知 (GH Actions, optional DISCORD_WEBHOOK_URL secret)
+
+**テスト基盤**
+- Vitest 4.1.5 導入 (Next 16 公式レシピ準拠、node 環境、resolve.tsconfigPaths)
+- 純粋ロジック抽出リファクタ: `lib/validation/`, `lib/format/`
+- 計 **148 テスト / 16 ファイル** 全緑 (validation / formatting / midi / vocal-range / key-recommendation / advice 各ルール / extractors / orchestrator)
+
+**Advice engine** (設計書: `docs/feature-design/advice-engine.md`)
+- S0: DAM raw_xml 実データ検証 (1 件目視 + API 直叩き全 137 フィールド列挙)
+- S0.5: vibratoType 数値コード → 1-indexed 15 種マッピング仮説 (medium confidence)
+- S1: `scores.intonation SMALLINT` 列追加 + マイグレーション + バックフィル 200/200 成功
+- S1: `lib/advice/raw-xml-extract.ts` 両 prefix (@, @_) 対応の純粋抽出関数群
+- S1: `lib/advice/vibrato-type-map.ts` + `describeVibratoType`
+- S2a: 単発ルール 6 本 (R01 素点/ボーナス分解 / R02 抑揚→表現力上限 / R04 レーダー最弱軸 / R06 リズム走り / R09 キー適合 / R10 Heart ルーレット注記)
+- S2a: `diagnose-score.ts` orchestrator + sortFindings (severity > confidence > ruleId)
+- S4: UI (AdviceSection / FindingCard / SourceBadge / 曲詳細ページに統合)
+
+**運用・整理**
+- `CLAUDE.md` 新規 (デプロイ手順 / push 認証トラブルの PAT 回避策 / secrets 管理 / .env キー一覧)
+- PoC (`poc/karaoke-sync-poc/`) 退役: Python 本体・venv 削除 (-92 MB)、`.env` を repo root に統合
+- `docs/poc-archive.md` 新規 (PoC → Edge Function 移植マッピング + INIT モード SQL 版 + デバッグ curl 版)
+- `scripts/*.py` 5 本の ENV_PATH を `ROOT / ".env"` に一括書き換え
+- `.gitignore` で root `.env` 保護、`**/.venv/` へ汎化
+
+#### ⚠️ 未着手 (優先順位順)
+
+| 項目 | 想定工数 | ブロッカー |
+|---|---|---|
+| Advice S2b 技法系ルール (R03 音程スイート / R05 ビブラート型 / R07 技法単調 / R11 Ai 減点区間 / R12 全国平均 / R14 メロディ区分) | 2h | なし |
+| Advice S2c 区間系 (R08 24 区間弱点) | 1h | なし |
+| Advice S2d 要検証系 (R13 maxTotalPoints) | 1.5h | maxTotalPoints 意味の別曲サンプル検証 |
+| Advice S3 集計診断 (R20-R24: recommendKey 統合、伸び悩み、改善トレンド、散布診断、得意→苦手転用) | 2h | S2a 済 |
+| Advice S6 フィードバック収集 (👍/👎 簡易 log → 閾値較正素材) | 2h | S4 済 |
+| Ai Heart 別エンドポイント調査 (`GetScoringHeartListXML.do` 仮称) | 不明 | 実機データアクセス |
+| GCM `shun19991214` 根本対処 (`git credential fill` 出力診断) | 15 分 | 未着手 |
+| `http.sslVerify=false` グローバル解除 | 5 分 | - |
+| 月次サマリ / 統計ビュー (`/stats`) | 2-3h | データ蓄積量次第 |
+| セトリのテンプレ化 (`setlists.is_template`) | 3-4h | DB マイグレーション必要 |
+| オススメ曲 (Claude API 連携) | 3-4h | `ANTHROPIC_API_KEY` 準備 + 料金設定 |
+| 24 区間ピッチグラフ UI | 4h+ | S2c と合わせて検討 |
+| Phase 6+ 将来機能 (音源解析 / JOYSOUND / 歌唱動画統合 / ソーシャル) | 週-月 | ワークストリーム分離必要 |
+
+#### 🟦 ブロック中・監視のみ
+
+- 本番で S4 の実データ挙動確認 → 閾値 / 文言の微調整 (ユーザー確認待ち)
+- GCM 資格情報問題 (push は PAT 埋め込み方式で暫定回避中)
+

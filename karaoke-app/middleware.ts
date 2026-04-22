@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+// NOTE: relative import (not "@/..." alias). Vercel's edge-function bundler
+// rejected the alias with "unsupported modules" even though `next build`
+// passes locally. Keep this file's imports self-contained / relative.
+import { updateSession } from "./lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request);

@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import type { Database } from "@/types/database";
+// Type-only import kept relative so the middleware bundle never hits the
+// "@/" alias (see root middleware.ts for context on Vercel edge bundling).
+import type { Database } from "../../types/database";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

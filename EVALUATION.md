@@ -300,14 +300,21 @@ SHOULD:
   - [FILE] TypeScript 実装が poc/karaoke-sync-poc/src/ のロジックと機能等価
 ```
 
-### P5-02 Vault 連携
+### P5-02 cdmCardNo 連携
+
+> **設計変更メモ (2026-04)**: 当初は Supabase Vault 暗号化 (`profiles.cdm_card_no_vault_id UUID`) を
+> 想定していたが、MVP は plaintext 列 (`profiles.cdm_card_no TEXT`) に退避した。
+> セキュリティは **RLS + service_role 限定 RPC** で担保する。Phase 6 以降で Vault
+> に戻す余地は残す (schema.sql 冒頭コメント参照)。以下 MUST は plaintext 前提に
+> 書き換え済み。
 
 ```yaml
 MUST:
-  - [CMD] ユーザーが set_my_cdm_card_no('test-card') を RPC で呼び出せる
-  - [DB] profiles.cdm_card_no_vault_id が NULL でなくなる
-  - [CMD] service_role キーで get_cdm_card_no_for(user_id) を呼び出すと、元の 'test-card' が返る
-  - [CMD] anon ロールで get_cdm_card_no_for を呼び出すと 権限エラーになる
+  - [CMD] ユーザーが set_my_cdm_card_no('<test-card>') を RPC で呼び出せる
+  - [DB] profiles.cdm_card_no が NULL でなく、長さ 20 文字以上
+  - [CMD] service_role で profiles.cdm_card_no を SELECT すると登録した値が返る
+  - [CMD] anon / authenticated ロールでは get_cdm_card_no_for を呼び出せない
+         (GRANT が service_role 限定なので関数自体が実行不可)
 ```
 
 ### P5-03 Cron スケジュール

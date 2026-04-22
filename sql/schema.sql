@@ -7,6 +7,10 @@
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";   -- For fuzzy search on title/artist
+-- supabase_vault extension is retained (enabled in the project) but currently
+-- UNUSED. The initial design stored cdmCardNo as an encrypted vault secret,
+-- but MVP fell back to a plaintext column (see profiles below). Re-introduce
+-- vault usage in a future iteration if cdmCardNo sensitivity warrants it.
 CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA vault;
 
 
@@ -40,20 +44,24 @@ CREATE TYPE scoring_type AS ENUM (
 
 -- ============================================================================
 -- TABLE: profiles
--- User profile + encrypted DAM credentials
+-- User profile + DAM credentials
 -- ============================================================================
+-- DESIGN NOTE: cdmCardNo was originally designed to live in Supabase Vault
+-- (encrypted at rest) and the column was named `cdm_card_no_vault_id UUID`.
+-- MVP fell back to plaintext storage because Vault wiring added schema/runtime
+-- complexity disproportionate to the single-user threat model. If this app
+-- ever serves multiple users with distinct threat boundaries, rotate to Vault
+-- and restore the helper functions to vault-backed implementations.
 CREATE TABLE profiles (
   id            UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name  TEXT,
-  -- cdm_card_no is stored encrypted in Supabase Vault; this column holds only
-  -- the vault secret_id reference
-  cdm_card_no_vault_id UUID,   -- References vault.secrets(id)
+  cdm_card_no   TEXT,                                    -- plaintext; RLS-scoped
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON COLUMN profiles.cdm_card_no_vault_id IS
-  'Reference to vault.secrets(id) holding the encrypted cdmCardNo. Never store the card number in plaintext.';
+COMMENT ON COLUMN profiles.cdm_card_no IS
+  'DAM membership card number (base64-encoded, ~20 chars). Stored plaintext; access guarded by RLS so only the owning user (or service_role) can read.';
 
 
 -- ============================================================================
@@ -480,60 +488,49 @@ CREATE POLICY sync_logs_owner ON sync_logs
 
 
 -- ============================================================================
--- VAULT HELPER: store/retrieve cdmCardNo securely
+-- CREDENTIALS HELPER: store/retrieve cdmCardNo (plaintext, RLS-scoped)
 -- ============================================================================
+-- The function signatures (argument and return types) are preserved from the
+-- earlier vault-backed design so existing callers (Edge Function, UI action)
+-- keep working. Bodies are rewritten for plaintext access. Should this rotate
+-- back to Vault in a future iteration, keep these signatures stable.
 
--- Store a new cdmCardNo for the current user. Returns the vault secret_id.
+-- Upsert the caller's cdmCardNo. Returns void (callers should simply check
+-- for absence of error). Relies on auth.uid() to resolve the target row.
 CREATE OR REPLACE FUNCTION set_my_cdm_card_no(p_card_no TEXT)
-RETURNS UUID
+RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, vault
+SET search_path = public
 AS $$
-DECLARE
-  v_vault_id UUID;
 BEGIN
-  -- Clean up previous secret if exists
-  PERFORM vault.delete_secret(cdm_card_no_vault_id)
-    FROM profiles WHERE id = auth.uid() AND cdm_card_no_vault_id IS NOT NULL;
-
-  -- Create new secret
-  v_vault_id := vault.create_secret(p_card_no, 'cdm_card_no:' || auth.uid());
-
-  -- Upsert profile
-  INSERT INTO profiles (id, cdm_card_no_vault_id)
-  VALUES (auth.uid(), v_vault_id)
+  INSERT INTO profiles (id, cdm_card_no)
+  VALUES (auth.uid(), p_card_no)
   ON CONFLICT (id) DO UPDATE
-    SET cdm_card_no_vault_id = v_vault_id,
-        updated_at = NOW();
-
-  RETURN v_vault_id;
+    SET cdm_card_no = EXCLUDED.cdm_card_no,
+        updated_at  = NOW();
 END;
 $$;
 
 -- Server-side only. Callable by a service role (e.g. a scheduled sync job).
--- Not exposed to client/anon role.
+-- Not exposed to client / anon / authenticated roles.
 CREATE OR REPLACE FUNCTION get_cdm_card_no_for(p_user_id UUID)
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, vault
+SET search_path = public
 AS $$
 DECLARE
-  v_vault_id UUID;
-  v_secret   TEXT;
+  v_card TEXT;
 BEGIN
-  SELECT cdm_card_no_vault_id INTO v_vault_id
+  SELECT cdm_card_no INTO v_card
     FROM profiles WHERE id = p_user_id;
 
-  IF v_vault_id IS NULL THEN
+  IF v_card IS NULL THEN
     RAISE EXCEPTION 'No cdmCardNo registered for user %', p_user_id;
   END IF;
 
-  SELECT decrypted_secret INTO v_secret
-    FROM vault.decrypted_secrets WHERE id = v_vault_id;
-
-  RETURN v_secret;
+  RETURN v_card;
 END;
 $$;
 

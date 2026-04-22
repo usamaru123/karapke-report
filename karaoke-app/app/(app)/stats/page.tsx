@@ -5,6 +5,7 @@ import { ScoreRadarChart } from "@/components/features/repertoire/detail/ScoreRa
 import { MonthPicker } from "@/components/features/stats/MonthPicker";
 import { MonthlyTrendChart } from "@/components/features/stats/MonthlyTrendChart";
 import { SongOrderChart } from "@/components/features/stats/SongOrderChart";
+import { EstimatedNote } from "@/components/ui/EstimatedNote";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
 import { buildHistoryInput } from "@/lib/advice/build-history-input";
 import { diagnoseHistoryOverall } from "@/lib/advice/diagnose-history";
@@ -274,9 +275,7 @@ export default async function StatsPage({
               />
             ))}
           </div>
-          <p className="mt-2 border-t border-white/5 pt-2 text-[10px] text-white/30">
-            DAM 精密採点 Ai の公式ロジック詳細は非公開。有志スコアラー実測と公開特許に基づく推定を含みます。
-          </p>
+          <EstimatedNote variant="advice" className="mt-2" />
         </section>
       )}
 

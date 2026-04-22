@@ -145,6 +145,16 @@ export default async function RepertoireDetailPage({
           findings={findings}
           aggregateFindings={aggregateFindings}
           votes={votes}
+          dataWindow={
+            recent10.length > 0
+              ? {
+                  count: recent10.length,
+                  // scores are sorted recent-first in the query; use first/last
+                  fromDate: recent10[recent10.length - 1].sung_at,
+                  toDate: recent10[0].sung_at,
+                }
+              : undefined
+          }
         />
       )}
 

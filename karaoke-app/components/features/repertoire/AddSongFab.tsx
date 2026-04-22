@@ -3,11 +3,8 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AddSongModal } from "@/components/features/repertoire/add-song/AddSongModal";
-import type { AddableSong } from "@/lib/queries/repertoire";
 
-type Props = { addableSongs: AddableSong[] };
-
-export function AddSongFab({ addableSongs }: Props) {
+export function AddSongFab() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -21,11 +18,7 @@ export function AddSongFab({ addableSongs }: Props) {
         <Plus size={26} />
       </button>
 
-      <AddSongModal
-        open={open}
-        onClose={() => setOpen(false)}
-        addableSongs={addableSongs}
-      />
+      <AddSongModal open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

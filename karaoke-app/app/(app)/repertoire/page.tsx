@@ -4,7 +4,6 @@ import { RepertoireList } from "@/components/features/repertoire/RepertoireList"
 import { SearchBar } from "@/components/features/repertoire/SearchBar";
 import { SortMenu } from "@/components/features/repertoire/SortMenu";
 import {
-  getAddableScoredSongs,
   getRepertoire,
   parseConfidenceFilter,
   parseStatusFilter,
@@ -41,9 +40,8 @@ export default async function RepertoirePage({
   const sort = parseSort(sp.sort);
   const q = (sp.q ?? "").trim();
 
-  const [items, addableSongs, userRange] = await Promise.all([
+  const [items, userRange] = await Promise.all([
     getRepertoire({ status, confidence, sort, search: q || undefined }),
-    getAddableScoredSongs(),
     getUserVocalRange(),
   ]);
 
@@ -72,7 +70,7 @@ export default async function RepertoirePage({
         clearSearchHref="/repertoire"
       />
 
-      <AddSongFab addableSongs={addableSongs} />
+      <AddSongFab />
     </div>
   );
 }

@@ -174,6 +174,23 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 
 ## ✅ Done (直近 20 件)
 
+### [UX-ADDSONG-HISTORY-TAB-REMOVE] 曲追加モーダルから「採点履歴から」タブ削除
+- Completed: 2026-04-22 / (next commit)
+- Labels: `UX`, `DATA`
+
+`AddSongModal` のタブ切替を廃止し手動追加専用に。歌った曲は sync で
+自動 unset 追加されるためタブが冗長。`getAddableScoredSongs` / `AddableSong` /
+`AddFromHistoryTab.tsx` も削除。手動追加モーダルに「DAM にない曲・まだ歌って
+いない曲を登録する用途」と説明文追加。
+
+### [DATA-BACKFILL-REPERTOIRE] 過去の歌唱曲を repertoire に一括 backfill
+- Completed: 2026-04-22 / (next commit)
+- Labels: `DATA`, `DB-migration`
+
+migration 008 で `scores` に存在するが `repertoire` に無い
+(user_id, song_id) を全て `confidence='unset'` として INSERT。Edge Function
+が自動追加するようになった時点より前の歌唱曲を救済。冪等 (NOT EXISTS)。
+
 ### [BUG-CONFIDENCE-DEFAULT-UNSET] 新規曲 / デフォルト曲を 'unset' に統一
 - Completed: 2026-04-22 / Commit: `e2ab0ce`
 - Labels: `BUG`, `DATA`, `DB-migration`

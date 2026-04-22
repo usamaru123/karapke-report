@@ -1,22 +1,22 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
-import type { AddableSong } from "@/lib/queries/repertoire";
-import { AddFromHistoryTab } from "./AddFromHistoryTab";
+import { useEffect } from "react";
 import { ManualAddForm } from "./ManualAddForm";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  addableSongs: AddableSong[];
 };
 
-type Tab = "history" | "manual";
-
-export function AddSongModal({ open, onClose, addableSongs }: Props) {
-  const [tab, setTab] = useState<Tab>("history");
-
+/**
+ * Manual-add only. The "採点履歴から" tab was removed — the sync pipeline
+ * now auto-inserts every sung song as `confidence='unset'`, so
+ * rebuilding-from-history from the UI is redundant. This dialog is for
+ * songs that aren't on DAM (yet) or that the user wants to register as
+ * "歌いたい" before actually singing them.
+ */
+export function AddSongModal({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -65,59 +65,15 @@ export function AddSongModal({ open, onClose, addableSongs }: Props) {
           </button>
         </div>
 
-        <div
-          role="tablist"
-          aria-label="追加元"
-          className="mx-5 mt-3 flex gap-1 rounded-md bg-bg-elevated p-1"
-        >
-          <TabButton
-            active={tab === "history"}
-            onClick={() => setTab("history")}
-          >
-            採点履歴から
-          </TabButton>
-          <TabButton
-            active={tab === "manual"}
-            onClick={() => setTab("manual")}
-          >
-            手動で追加
-          </TabButton>
-        </div>
+        <p className="mx-5 mt-2 text-xs text-white/50">
+          歌った曲は同期時に自動で「未設定」として追加されます。ここは
+          まだ歌っていない / DAM API に無い曲を手動登録する用途です。
+        </p>
 
         <div className="p-5">
-          {tab === "history" ? (
-            <AddFromHistoryTab songs={addableSongs} onDone={onClose} />
-          ) : (
-            <ManualAddForm onDone={onClose} />
-          )}
+          <ManualAddForm onDone={onClose} />
         </div>
       </div>
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`flex-1 rounded px-3 py-1.5 text-xs transition-colors ${
-        active
-          ? "bg-neon-pink/20 text-neon-pink"
-          : "text-white/60 hover:text-white"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

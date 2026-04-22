@@ -103,61 +103,12 @@ Stage 0 で 5 サンプル検証した時点では「その歌唱の到達可能
 
 ### 🔶 P1 UX バッチ
 
-#### [UX-ACCESSIBILITY-01] 色弱対応 + 暗所コントラスト + <80点の色 + 片手操作
-- Created: 2026-04-22
-- Priority: medium / Labels: `UX`, `a11y`
-
-- ScoreBadge の色のみ判別を **色 + 形 or テキスト** 併用
-- <80 点のグレー表示を濃い青系に変更 (頑張った感を保持)
-- BottomNav + FAB を親指エリア (下半分) に集約済み確認
-- 暗所視認性: 彩度の高いネオン色を暗所モードでは落とす
-
 #### [UX-ONBOARDING-DAMCARD] DAM カード登録チュートリアル
 - Created: 2026-04-22
 - Priority: medium / Labels: `UX`, `onboarding`
 
 カード番号取得手順をスクショ + ステップで案内。`/settings` 初回表示時 or Home の
-OnboardingBanner から遷移。離脱率 No.1 ポイント。
-
-#### [UX-EMPTY-STATES] 空状態 CTA 統一
-- Created: 2026-04-22
-- Priority: medium / Labels: `UX`
-
-HeroCard null / レパ 0 件 / 履歴 0 件 / セトリ 0 件の文言と CTA を統一コンポーネント化。
-「最初の 1 曲を記録してみよう」等の次アクションを常に明示。
-
-#### [UX-ADVICE-DATA-LABELS] アドバイス「データ期間」ラベル統一
-- Created: 2026-04-22
-- Priority: medium / Labels: `UX`, `ADV`
-
-「直近 10 回の傾向」などの曖昧表現を `直近 N 件 (YYYY/MM/DD - YYYY/MM/DD)` 形式で
-統一。推定値注釈も共通コンポーネント `<EstimatedNote />` 化。
-
-#### [UX-GLOBAL-FAB] FAB をホーム/履歴にも表示
-- Created: 2026-04-22
-- Priority: medium / Labels: `UX`
-
-現在レパ画面のみの `AddSongFab` を全画面共通に昇格。どこからでも曲追加/記録可能に。
-
-#### [FEAT-RANGE-FILTER] 音域帯でレパ検索
-- Created: 2026-04-22
-- Priority: medium / Labels: `FEAT`, `repertoire`
-
-`songs.range_low/high` と user の voice_range を使って「声域内だけ表示」フィルタ。
-FilterChips に 3 軸目として追加。
-
-#### [FEAT-HISTORY-FILTERS-EXT] 履歴に日付範囲 + 点数範囲 + 機種フィルタ
-- Created: 2026-04-22
-- Priority: medium / Labels: `FEAT`, `history`
-
-HistoryToolbar に 3 フィルタ追加。`getHistoryWithSessions` を拡張。
-
-#### [FEAT-SETLIST-BALANCE-WARN] セトリバランス警告
-- Created: 2026-04-22
-- Priority: medium / Labels: `FEAT`, `setlist`
-
-「高音連続 3 曲」「バラード 3 連」等を `songs.range_high` と BPM (後日) で検出、
-セトリ編集画面に警告バナー表示。
+OnboardingBanner から遷移。離脱率 No.1 ポイント。要スクショ素材。
 
 #### [FEAT-ACHIEVEMENT-CARD] 自己ベスト更新演出 + 共有カード PNG
 - Created: 2026-04-22
@@ -165,18 +116,6 @@ HistoryToolbar に 3 フィルタ追加。`getHistoryWithSessions` を拡張。
 
 新スコア取り込み時に自己ベスト検出 → ネオンパルス + PNG 生成 (曲名 + 点数 + レーダー)。
 SNS 共有で自然拡散を狙う。ライブラリ: `@vercel/og` or `html-to-image`。
-
-#### [FEAT-CSV-EXPORT] データエクスポート (CSV/JSON)
-- Created: 2026-04-22
-- Priority: medium / Labels: `FEAT`, `data`
-
-`/settings` にエクスポートボタン。scores / repertoire / setlists を選択式でダウンロード。
-
-#### [FEAT-CALENDAR-ICS] セトリを .ics 出力
-- Created: 2026-04-22
-- Priority: low / Labels: `FEAT`, `setlist`
-
-`scheduled_for` があるセトリを .ics ダウンロード → Google カレンダー等に取り込み。
 
 ---
 
@@ -285,6 +224,39 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 ---
 
 ## ✅ Done (直近 20 件)
+
+### 🔶 P1 UX バッチ (2026-04-23) — 9 件同時リリース
+- Completed: 2026-04-23 / Commits: see per-ticket below
+- Labels: `UX`, `FEAT`, `a11y`, `advice`, `repertoire`, `history`, `setlist`, `export`
+
+1. **[UX-EMPTY-STATES]** `3a65f3d` — 共通 `<EmptyState>` コンポーネント (ui/EmptyState.tsx)、
+   HeroCard / RepertoireEmptyState / SetlistEmptyState / 履歴 0 件ページが統一、
+   CTA (同期設定 / 曲追加 / セトリ作成) を明示
+2. **[UX-ACCESSIBILITY-01]** `0206e57` — ScoreBadge に `aria-label` で tier ラベル音読、
+   80 点未満を `text-white/40` → `text-slate-300` に変更 (頑張った感維持 + 暗所コントラスト)
+3. **[UX-ADVICE-DATA-LABELS]** `0206e57` — `EstimatedNote` 共通コンポーネント化、
+   AdviceSection 見出しは既定は無印、`dataWindow` prop 渡しで「直近 N 件 · YYYY/MM/DD – YYYY/MM/DD」
+   表示。誤 lead (単一スコア detail で「直近 10 回」と表示) を解消
+4. **[UX-GLOBAL-FAB]** `1be3345` — `GlobalAddFab` を `(app)/layout.tsx` 常駐に、
+   whitelist (`/`, `/repertoire`, `/history`, `/stats`, `/setlists`) で表示制御。
+   旧 `AddSongFab` の per-page 設置は解除
+5. **[FEAT-RANGE-FILTER]** `1be3345` — `getRepertoire` に `range` フィルタ追加
+   (`in_range` / `key_tweak` / `hard` / `any`)。FilterChips 3 軸目に表示、
+   FilterSummaryBar にも連動 (適用中表示 + 1 タップクリア)
+6. **[FEAT-HISTORY-FILTERS-EXT]** `b3e77fc` — `HistoryToolbar` に「詳細フィルタ」
+   折りたたみ UI (日付範囲 / 点数上下限 / 機種 `any/ai/ai_heart/dxg/dx/other`)、
+   `getHistoryWithSessions` に 5 つの新オプション。適用中インジケータ付き
+7. **[FEAT-SETLIST-BALANCE-WARN]** `0a1fd67` — `lib/setlist-balance.ts` +
+   `<BalanceWarnings>` でセトリ編集画面に警告バナー。3 ルール:
+   - 声域外 (hard) の曲が存在
+   - 高音曲 (user.high+1 以上) が 3 曲連続
+   - 低音寄り (user.low + range*0.4 以下) が 3 曲連続
+8. **[FEAT-CSV-EXPORT]** `62c191c` — API routes `/api/export/scores` +
+   `/api/export/repertoire`、RFC 4180 CSV (UTF-8 BOM 付き)。Settings ページ
+   「エクスポート」セクションからダウンロード
+9. **[FEAT-CALENDAR-ICS]** `62c191c` — `/api/export/setlists.ics` で
+   `scheduled_for` があるセトリを iCalendar 形式出力。DATE 値の終日 VEVENT、
+   DESCRIPTION は先頭 5 曲 + メモ、UID 安定 (再インポートで更新)
 
 ### [UX-STATS-PAST-MONTHS] 過去月ドリルダウン
 - Completed: 2026-04-22 / Commit: `82a010e`

@@ -8,7 +8,7 @@ export type NavItem = {
 
 export const navItems: NavItem[] = [
   { href: "/", label: "ホーム", icon: Home },
-  { href: "/repertoire", label: "レパ", icon: List },
+  { href: "/repertoire", label: "曲", icon: List },
   { href: "/history", label: "履歴", icon: Clock },
   { href: "/setlists", label: "セトリ", icon: ListMusic },
   { href: "/settings", label: "設定", icon: Settings },

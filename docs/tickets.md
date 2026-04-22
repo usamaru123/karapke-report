@@ -57,7 +57,7 @@
 
 ## 🟣 In Progress
 
-_(currently empty)_
+_(currently empty — P0 UX batch shipped, see Done)_
 
 ---
 
@@ -100,6 +100,137 @@ Stage 0 で 5 サンプル検証した時点では「その歌唱の到達可能
 ---
 
 ## 📋 Backlog
+
+### 🔶 P1 UX バッチ
+
+#### [UX-ACCESSIBILITY-01] 色弱対応 + 暗所コントラスト + <80点の色 + 片手操作
+- Created: 2026-04-22
+- Priority: medium / Labels: `UX`, `a11y`
+
+- ScoreBadge の色のみ判別を **色 + 形 or テキスト** 併用
+- <80 点のグレー表示を濃い青系に変更 (頑張った感を保持)
+- BottomNav + FAB を親指エリア (下半分) に集約済み確認
+- 暗所視認性: 彩度の高いネオン色を暗所モードでは落とす
+
+#### [UX-ONBOARDING-DAMCARD] DAM カード登録チュートリアル
+- Created: 2026-04-22
+- Priority: medium / Labels: `UX`, `onboarding`
+
+カード番号取得手順をスクショ + ステップで案内。`/settings` 初回表示時 or Home の
+OnboardingBanner から遷移。離脱率 No.1 ポイント。
+
+#### [UX-EMPTY-STATES] 空状態 CTA 統一
+- Created: 2026-04-22
+- Priority: medium / Labels: `UX`
+
+HeroCard null / レパ 0 件 / 履歴 0 件 / セトリ 0 件の文言と CTA を統一コンポーネント化。
+「最初の 1 曲を記録してみよう」等の次アクションを常に明示。
+
+#### [UX-ADVICE-DATA-LABELS] アドバイス「データ期間」ラベル統一
+- Created: 2026-04-22
+- Priority: medium / Labels: `UX`, `ADV`
+
+「直近 10 回の傾向」などの曖昧表現を `直近 N 件 (YYYY/MM/DD - YYYY/MM/DD)` 形式で
+統一。推定値注釈も共通コンポーネント `<EstimatedNote />` 化。
+
+#### [UX-GLOBAL-FAB] FAB をホーム/履歴にも表示
+- Created: 2026-04-22
+- Priority: medium / Labels: `UX`
+
+現在レパ画面のみの `AddSongFab` を全画面共通に昇格。どこからでも曲追加/記録可能に。
+
+#### [FEAT-RANGE-FILTER] 音域帯でレパ検索
+- Created: 2026-04-22
+- Priority: medium / Labels: `FEAT`, `repertoire`
+
+`songs.range_low/high` と user の voice_range を使って「声域内だけ表示」フィルタ。
+FilterChips に 3 軸目として追加。
+
+#### [FEAT-HISTORY-FILTERS-EXT] 履歴に日付範囲 + 点数範囲 + 機種フィルタ
+- Created: 2026-04-22
+- Priority: medium / Labels: `FEAT`, `history`
+
+HistoryToolbar に 3 フィルタ追加。`getHistoryWithSessions` を拡張。
+
+#### [FEAT-SETLIST-BALANCE-WARN] セトリバランス警告
+- Created: 2026-04-22
+- Priority: medium / Labels: `FEAT`, `setlist`
+
+「高音連続 3 曲」「バラード 3 連」等を `songs.range_high` と BPM (後日) で検出、
+セトリ編集画面に警告バナー表示。
+
+#### [FEAT-ACHIEVEMENT-CARD] 自己ベスト更新演出 + 共有カード PNG
+- Created: 2026-04-22
+- Priority: medium / Labels: `FEAT`, `share`
+
+新スコア取り込み時に自己ベスト検出 → ネオンパルス + PNG 生成 (曲名 + 点数 + レーダー)。
+SNS 共有で自然拡散を狙う。ライブラリ: `@vercel/og` or `html-to-image`。
+
+#### [FEAT-CSV-EXPORT] データエクスポート (CSV/JSON)
+- Created: 2026-04-22
+- Priority: medium / Labels: `FEAT`, `data`
+
+`/settings` にエクスポートボタン。scores / repertoire / setlists を選択式でダウンロード。
+
+#### [FEAT-CALENDAR-ICS] セトリを .ics 出力
+- Created: 2026-04-22
+- Priority: low / Labels: `FEAT`, `setlist`
+
+`scheduled_for` があるセトリを .ics ダウンロード → Google カレンダー等に取り込み。
+
+---
+
+### 🔷 P2 UX バッチ (ADV-VERIFY-THRESHOLDS 後)
+
+#### [ADV-PERSONALIZED-DRILL] 弱点 × 難所 パーソナライズ助言
+- Created: 2026-04-22
+- Priority: low / Labels: `ADV`, `FEAT`
+- Blocker: `ADV-VERIFY-THRESHOLDS`
+
+ユーザの弱点項目 (表現力が平均より低い等) とその曲の難所 (サビ高音等) を掛け合わせた
+パーソナライズ助言。閾値較正完了後に着手。
+
+#### [FEAT-PRACTICE-PLAN] 練習プラン (週間 3 曲)
+- Created: 2026-04-22
+- Priority: low / Labels: `FEAT`
+
+「今週はこの 3 曲を集中練習」プラン生成 + 進捗表示。アドバイスエンジン信頼性確立後。
+
+#### [FEAT-GOAL-SETTING] 目標設定 + 達成演出
+- Created: 2026-04-22
+- Priority: low / Labels: `FEAT`
+
+「今月 20 曲」「しるしで 96 点」等の目標設定 + 進捗バー + 達成時祝いアニメ。
+
+#### [UX-WEEKDAY-TIME-ANALYSIS] 曜日 / 時間帯別パフォーマンス
+- Created: 2026-04-22
+- Priority: low / Labels: `UX`, `stats`
+
+`/stats` に曜日ヒートマップ + 時間帯別平均点。`sang_at` があれば実装可能。
+
+---
+
+### 💤 Phase 6+ / 要調査
+
+#### [RESEARCH-EXTERNAL-METADATA] 歌詞/タイアップ/BPM 取得ソース調査
+- Created: 2026-04-22
+- Priority: low / Labels: `RESEARCH`
+
+歌詞検索・タイアップ (アニメ/ドラマ)・ジャンル・年代・BPM の公式/非公式取得手段と
+ライセンス調査。JASRAC 有料 API、非公式スクレイピングの法的リスク等。
+
+#### [FEAT-LIVE-MODE] カラオケ中ライブモード
+- Created: 2026-04-22
+- Priority: low / Labels: `FEAT`, `Phase6+`
+
+全画面で次曲 / キー設定を大文字表示。実需要が不明なのでユーザーテスト後に判断。
+
+#### [FEAT-OCR] 採点画面スクショ OCR
+- Created: 2026-04-22
+- Priority: low / Labels: `FEAT`, `Phase6+`
+
+DAM 自動同期で十分なため主フローでは不要。JOYSOUND 対応 or 友人アカウント記録の
+避難路として。Vision API コスト見積 + 誤認識リカバリ UI 設計要。
 
 ### [FEAT-SUGGEST-CLAUDE] オススメ曲 (Claude API 連携)
 - Created: 2026-04-22 / Updated: 2026-04-22
@@ -154,6 +285,23 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 ---
 
 ## ✅ Done (直近 20 件)
+
+### 🔥 P0 UX バッチ (2026-04-22) — 9 件同時リリース
+- Completed: 2026-04-22 / (next commit)
+- Labels: `UX`, `home`, `repertoire`, `history`, `navigation`
+
+1. **[UX-BOTTOMNAV-LABELS]** BottomNav のラベル常時表示は既存、「レパ」→「曲」リネーム
+2. **[UX-CONFIDENCE-OPTIMISTIC]** 既に楽観 UI 実装済を確認 (state 即時 → rollback)
+3. **[UX-HISTORY-SESSION-SUMMARY]** `SessionGroup` 見出しに 平均 / 最高 / 曲数
+4. **[UX-REPERTOIRE-SORT]** 4 → 8 種に拡充 (avg/count/growth/stability 追加)、`parseSort` export 化
+5. **[UX-REPERTOIRE-DYNAMIC-BADGES]** 「あと N 点でベスト」「N 日歌ってない」badge
+6. **[UX-REPERTOIRE-SPARKLINE]** 自前 SVG `<Sparkline>` component、カード右上に直近 5 件折れ線
+7. **[UX-FILTER-SUMMARY-BAR]** 適用中フィルタ chip + 件数 + 一括クリア、フィルタ無しでは非表示
+8. **[UX-HOME-NEXT-SESSION]** `getNextScheduledSetlist()` query + `NextSessionBanner` (今日/明日/あと N 日)
+9. **[UX-HOME-SPARKLINE]** `getMonthlyKpiTrend(6)` query + KpiGrid 4 タイルに 6ヶ月スパークライン + 前月差分
+
+データ層拡張: `RepertoireWithMeta` に `avg_score` / `score_count` / `std_score` / `growth_score` /
+`recent_scores` / `days_since_last_sung` を追加。`Date.now()` は query 層でスナップして render 側は純粋に。
 
 ### [PERF-SYNC-INCR] インクリメンタル同期で手動取り込みを高速化
 - Completed: 2026-04-22 / Commit: `de619d0`

@@ -15,7 +15,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ENV_PATH = ROOT / "poc" / "karaoke-sync-poc" / ".env"
+ENV_PATH = ROOT / ".env"
 ANON_KEY_PATH = ROOT / "karaoke-app" / ".env.local"
 
 

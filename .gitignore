@@ -1,7 +1,8 @@
 # -----------------------------------------------------------------------------
 # Secrets — MUST NOT commit
 # -----------------------------------------------------------------------------
-poc/karaoke-sync-poc/.env
+/.env
+/.env.local
 karaoke-app/.env
 karaoke-app/.env.local
 karaoke-app/.env.*.local
@@ -32,9 +33,9 @@ karaoke-app/next-env.d.ts
 **/yarn-error.log*
 
 # -----------------------------------------------------------------------------
-# Python (PoC)
+# Python (scripts)
 # -----------------------------------------------------------------------------
-poc/karaoke-sync-poc/.venv/
+**/.venv/
 **/__pycache__/
 *.pyc
 *.pyo

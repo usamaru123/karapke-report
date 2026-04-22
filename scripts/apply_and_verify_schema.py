@@ -9,7 +9,7 @@ import psycopg2
 from psycopg2.extensions import connection as Connection
 
 ROOT = Path(__file__).resolve().parent.parent
-ENV_PATH = ROOT / "poc" / "karaoke-sync-poc" / ".env"
+ENV_PATH = ROOT / ".env"
 SCHEMA_PATH = ROOT / "sql" / "schema.sql"
 
 

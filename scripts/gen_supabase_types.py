@@ -16,7 +16,7 @@ from pathlib import Path
 import psycopg2
 
 ROOT = Path(__file__).resolve().parent.parent
-ENV_PATH = ROOT / "poc" / "karaoke-sync-poc" / ".env"
+ENV_PATH = ROOT / ".env"
 OUT_PATH = ROOT / "karaoke-app" / "types" / "database.ts"
 
 

@@ -1,13 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
-import { signIn } from "./actions";
+import { updatePassword } from "./actions";
 
-type Props = { notice?: string | null; error?: string | null };
-
-export function LoginForm({ notice, error }: Props) {
-  const [state, formAction, pending] = useActionState(signIn, null);
+export function ResetForm() {
+  const [state, formAction, pending] = useActionState(updatePassword, null);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg-base p-4">
@@ -16,41 +13,40 @@ export function LoginForm({ notice, error }: Props) {
         className="w-80 rounded-xl border border-white/10 bg-bg-surface p-6 shadow-glow-pink-soft"
       >
         <h1 className="mb-1 text-center text-xl font-semibold text-neon-pink neon-text-pink">
-          カラオケレパ
+          新しいパスワード
         </h1>
         <p className="mb-6 text-center text-xs text-white/60">
-          サインインして続けてください
+          設定後、改めてサインインしてください。
         </p>
 
-        {notice && (
-          <p className="mb-4 rounded border border-neon-green/40 bg-neon-green/10 px-3 py-2 text-xs text-neon-green">
-            {notice}
-          </p>
-        )}
-        {(state?.error || error) && (
+        {state?.error && (
           <p className="mb-4 rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-            {state?.error ?? error}
+            {state.error}
           </p>
         )}
 
         <label className="mb-3 block">
-          <span className="mb-1 block text-xs text-white/70">Email</span>
+          <span className="mb-1 block text-xs text-white/70">
+            新しいパスワード (8 文字以上)
+          </span>
           <input
-            type="email"
-            name="email"
+            type="password"
+            name="password"
             required
-            autoComplete="email"
+            minLength={8}
+            autoComplete="new-password"
             className="w-full rounded-md border border-white/10 bg-bg-elevated px-3 py-2 text-sm text-white outline-none focus:border-neon-cyan"
           />
         </label>
 
         <label className="mb-6 block">
-          <span className="mb-1 block text-xs text-white/70">Password</span>
+          <span className="mb-1 block text-xs text-white/70">確認のため再入力</span>
           <input
             type="password"
-            name="password"
+            name="confirm"
             required
-            autoComplete="current-password"
+            minLength={8}
+            autoComplete="new-password"
             className="w-full rounded-md border border-white/10 bg-bg-elevated px-3 py-2 text-sm text-white outline-none focus:border-neon-cyan"
           />
         </label>
@@ -60,14 +56,8 @@ export function LoginForm({ notice, error }: Props) {
           disabled={pending}
           className="w-full rounded-md bg-neon-pink px-3 py-2 text-sm font-semibold text-black shadow-glow-pink disabled:opacity-50"
         >
-          {pending ? "サインイン中..." : "Sign in"}
+          {pending ? "更新中..." : "パスワードを更新"}
         </button>
-
-        <p className="mt-4 text-center text-xs text-white/50">
-          <Link href="/forgot" className="text-neon-cyan hover:underline">
-            パスワードを忘れた場合
-          </Link>
-        </p>
       </form>
     </main>
   );

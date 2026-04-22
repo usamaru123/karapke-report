@@ -287,7 +287,7 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 ## ✅ Done (直近 20 件)
 
 ### [UX-WARMUP-CURVE] 曲順 × 得点の平均チャート (喉の温まり曲線)
-- Completed: 2026-04-22 / (next commit)
+- Completed: 2026-04-22 / Commit: `7befcd6`
 - Labels: `UX`, `stats`
 
 `/stats` に「曲順別 平均点」BarChart 追加。`getSongOrderPerformance()` で

@@ -244,6 +244,28 @@ Claude Code を使えば Phase 2-5 は大幅短縮可能。人間の判断が必
 - S2a: `diagnose-score.ts` orchestrator + sortFindings (severity > confidence > ruleId)
 - S4: UI (AdviceSection / FindingCard / SourceBadge / 曲詳細ページに統合)
 
+### 2026-04-22 続き 6: Home stats + Confidence unset + 24 区間 recharts + Setlist random + Sync perf 調査
+
+#### ✅ 完了
+
+- **Phase 1 Home 統計拡充 + `/stats` 詳細**: `MonthlySummaryCard` (今月 vs 先月の 3 指標 + トレンド矢印) を Dashboard に、`/stats` 新設 (recharts で月別 bar+line 12 ヶ月 + 全履歴レーダー + ベスト 10)
+- **Phase 2 confidence 'unset' + 自動追加 + quick-pick UI**: enum に `unset` を先頭追加 (`006` migration)、Edge Function `sync-scores/db.ts` が新規歌唱曲を `ensureRepertoireEntry` で自動 INSERT、`RepertoireCard` の ConfidenceStars を ConfidenceQuickPick (`<select>` 即時切替) に置換、FilterChips + getRepertoire 型に反映
+- **Phase 3 24 区間 recharts**: `PitchIntervalBars` を CSS バーから recharts BarChart に。色段階・最弱区間 ring・平均 ReferenceLine・Ai 減点第 2 シリーズ・Tooltip 日本語ラベル
+- **Phase 4 セトリランダム追加**: `randomFillSetlist` (confidence バケット絞り込み + Fisher-Yates + バルク INSERT)、`RandomFillButton` が +3/+5/+10 プリセット、SetlistEditor に統合
+- **Phase 5 同期パフォーマンス 調査**: `docs/tech-research/20260422-sync-performance.md`。定時バッチは既稼働 (GH Actions cron JST 12:00 毎日)、手動ボタン遅延の主因と短縮 3 案を提示。実装は別タスク
+
+#### ⚠️ ユーザー側で必要な手動作業
+
+- `sql/migrations/006_confidence_unset.sql` を Supabase SQL Editor で実行 (未実行だと自動追加が DB 側で失敗)
+- `sql/migrations/005_advice_feedback.sql` (前回分) も未実行なら併せて
+
+#### テスト / ビルド
+
+- **243 テスト / 31 ファイル** 全緑
+- ルート数 19 (`/stats` 追加で +1)
+
+---
+
 ### 2026-04-22 続き 5: 改修まち一気消化 (/scores/[id] + S6 + GCM + sslVerify + 良音対応)
 
 #### ✅ 完了

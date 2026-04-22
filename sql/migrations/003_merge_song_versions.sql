@@ -46,18 +46,27 @@ SET song_id = m.keeper_id
 FROM song_merge_map m
 WHERE si.song_id = m.loser_id;
 
--- repertoire has UNIQUE (user_id, song_id). Drop loser rows where the user
--- already owns the keeper, then point the rest at the keeper.
-DELETE FROM repertoire r
-WHERE EXISTS (
-  SELECT 1 FROM song_merge_map m
-  WHERE r.song_id = m.loser_id
-    AND EXISTS (
-      SELECT 1 FROM repertoire r2
-      WHERE r2.user_id = r.user_id AND r2.song_id = m.keeper_id
-    )
-);
+-- repertoire has UNIQUE (user_id, song_id). Multiple rows per user could
+-- collapse onto the same (user, keeper) pair — e.g. a user who registered
+-- BOTH "Song (プロオケ)" and "Song (生音)" separately, or BOTH a loser and
+-- the keeper. Deduplicate first: keep exactly one row per
+-- (user_id, canonical_song_id), preferring the oldest `added_at` (tie-broken
+-- by id for stability). Rows with rn > 1 are dropped.
+WITH rep_with_canon AS (
+  SELECT
+    r.id AS rep_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY r.user_id, COALESCE(m.keeper_id, r.song_id)
+      ORDER BY r.added_at ASC, r.id ASC
+    ) AS rn
+  FROM repertoire r
+  LEFT JOIN song_merge_map m ON m.loser_id = r.song_id
+)
+DELETE FROM repertoire
+WHERE id IN (SELECT rep_id FROM rep_with_canon WHERE rn > 1);
 
+-- After dedup, each remaining loser row is the only (user, canonical) copy,
+-- so UPDATE can safely point it at the keeper without conflict.
 UPDATE repertoire r
 SET song_id = m.keeper_id
 FROM song_merge_map m

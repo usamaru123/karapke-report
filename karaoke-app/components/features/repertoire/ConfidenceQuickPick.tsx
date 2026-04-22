@@ -7,7 +7,7 @@ import type { ConfidenceLevel } from "@/types/domain";
 type Props = {
   repertoireId: string;
   initial: ConfidenceLevel;
-  /** Compact mode for the repertoire list row. */
+  /** Visual size. `md` is the tappable row variant, `sm` for dense surfaces. */
   size?: "sm" | "md";
 };
 
@@ -21,23 +21,24 @@ const OPTIONS: { value: ConfidenceLevel; label: string }[] = [
 ];
 
 const COLOR_BY_LEVEL: Record<ConfidenceLevel, string> = {
-  unset: "border-white/20 text-white/50",
-  wanna_sing: "border-neon-amber/40 text-neon-amber",
-  practicing: "border-neon-cyan/40 text-neon-cyan",
-  normal: "border-white/30 text-white/80",
-  confident: "border-neon-pink/40 text-neon-pink",
-  shelf: "border-white/10 text-white/40",
+  unset: "border-white/25 text-white/60 bg-white/[0.03]",
+  wanna_sing: "border-neon-amber/50 text-neon-amber bg-neon-amber/10",
+  practicing: "border-neon-cyan/50 text-neon-cyan bg-neon-cyan/10",
+  normal: "border-white/30 text-white/80 bg-white/[0.03]",
+  confident: "border-neon-pink/50 text-neon-pink bg-neon-pink/10",
+  shelf: "border-white/15 text-white/40 bg-white/[0.02]",
 };
 
 /**
- * Inline confidence selector for the repertoire list row. Native <select>
- * so it feels right on mobile; styled as a small pill to match the row
- * chrome. Optimistic update + rollback on failure.
+ * Inline confidence selector. Rendered as a rounded pill wrapping a native
+ * `<select>`; sizes aim at ≥ 28px tap targets on mobile. Optimistic update
+ * with rollback on failure. The caller is responsible for giving us a
+ * `pointer-events-auto` container if we sit on top of a click-through Link.
  */
 export function ConfidenceQuickPick({
   repertoireId,
   initial,
-  size = "sm",
+  size = "md",
 }: Props) {
   const [value, setValue] = useState<ConfidenceLevel>(initial);
   const [isPending, startTransition] = useTransition();
@@ -56,30 +57,38 @@ export function ConfidenceQuickPick({
   }
 
   const sizeCls =
-    size === "sm" ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-1";
+    size === "sm"
+      ? "text-[11px] h-6 px-2"
+      : "text-xs h-7 px-2.5";
   const colorCls = COLOR_BY_LEVEL[value];
 
   return (
-    <label
-      className={`inline-flex items-center rounded-full border bg-bg-surface ${sizeCls} ${colorCls} ${
+    <div
+      className={`inline-flex items-center rounded-full border ${sizeCls} ${colorCls} ${
         isPending ? "opacity-60" : ""
       }`}
-      // Keep the parent card's Link from capturing the click.
+      // Stop navigation if we're sitting on top of a parent <Link>.
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
     >
       <select
         value={value}
         disabled={isPending}
         onChange={(e) => handleChange(e.target.value as ConfidenceLevel)}
-        className="bg-transparent outline-none"
+        className="h-full cursor-pointer bg-transparent pr-1 font-semibold outline-none"
+        aria-label="自信度を変更"
       >
         {OPTIONS.map((o) => (
-          <option key={o.value} value={o.value} className="bg-bg-elevated text-white">
+          <option
+            key={o.value}
+            value={o.value}
+            className="bg-bg-elevated text-white"
+          >
             {o.label}
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }

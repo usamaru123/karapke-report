@@ -6,22 +6,12 @@ import { SortMenu } from "@/components/features/repertoire/SortMenu";
 import {
   getAddableScoredSongs,
   getRepertoire,
-  type RepertoireFilter,
+  parseConfidenceFilter,
+  parseStatusFilter,
   type RepertoireSort,
 } from "@/lib/queries/repertoire";
 import { getUserVocalRange } from "@/lib/queries/user_range";
 
-const FILTERS: readonly RepertoireFilter[] = [
-  "all",
-  "over90",
-  "recent",
-  "favorite",
-  "unset",
-  "wanna_sing",
-  "practicing",
-  "confident",
-  "shelf",
-];
 const SORTS: readonly RepertoireSort[] = [
   "best_score",
   "recent",
@@ -29,11 +19,6 @@ const SORTS: readonly RepertoireSort[] = [
   "added",
 ];
 
-function parseFilter(v: string | undefined): RepertoireFilter {
-  return (FILTERS as readonly string[]).includes(v ?? "")
-    ? (v as RepertoireFilter)
-    : "all";
-}
 function parseSort(v: string | undefined): RepertoireSort {
   return (SORTS as readonly string[]).includes(v ?? "")
     ? (v as RepertoireSort)
@@ -43,15 +28,21 @@ function parseSort(v: string | undefined): RepertoireSort {
 export default async function RepertoirePage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; sort?: string; q?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    confidence?: string;
+    sort?: string;
+    q?: string;
+  }>;
 }) {
   const sp = await searchParams;
-  const filter = parseFilter(sp.filter);
+  const status = parseStatusFilter(sp.status);
+  const confidence = parseConfidenceFilter(sp.confidence);
   const sort = parseSort(sp.sort);
   const q = (sp.q ?? "").trim();
 
   const [items, addableSongs, userRange] = await Promise.all([
-    getRepertoire({ filter, sort, search: q || undefined }),
+    getRepertoire({ status, confidence, sort, search: q || undefined }),
     getAddableScoredSongs(),
     getUserVocalRange(),
   ]);
@@ -68,7 +59,7 @@ export default async function RepertoirePage({
         <SearchBar initialQuery={q} />
       </header>
 
-      <FilterChips active={filter} />
+      <FilterChips status={status} confidence={confidence} />
 
       <div className="flex items-center justify-end px-4 py-2 text-xs">
         <SortMenu active={sort} />

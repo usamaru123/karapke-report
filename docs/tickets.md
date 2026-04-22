@@ -174,6 +174,57 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 
 ## ✅ Done (直近 20 件)
 
+### [BUG-REPERTOIRE-QUICKPICK-NAV] レパ一覧の confidence quick-pick で詳細遷移
+- Completed: 2026-04-22 / (next commit)
+- Labels: `BUG`, `UX`
+
+Link を `absolute inset-0 z-0`、quick-pick 側を `relative z-10` +
+`pointer-events-auto` に再レイアウトして競合解消。
+
+### [UX-REPERTOIRE-CARD-COMPACT] レパカード: タグ削除 + quick-pick 大型化
+- Completed: 2026-04-22 / (next commit)
+
+`#JPOP` などタグ行を削除、quick-pick を h-7 / text-xs に拡大、色分け強化。
+
+### [UX-REPERTOIRE-FILTER-COMBO] status × confidence 複合フィルタ
+- Completed: 2026-04-22 / (next commit)
+
+`getRepertoire({ status, confidence })` に二軸化。URL:
+`?status=recent&confidence=practicing`。FilterChips は 2 グループ独立 toggle。
+
+### [UX-PITCH-CHART-READABILITY] 24 区間音程チャート可読性改善
+- Completed: 2026-04-22 / (next commit)
+
+Ai 減点を隣接バーに分離 (group bars)、X 軸 5 刻みラベル、高さ 180→240px。
+
+### [UX-RADAR-NUMBERS] レーダーに実数値併記
+- Completed: 2026-04-22 / (next commit)
+
+PolarAngleAxis の tick を `軸名 / 数値` の 2 行 SVG に。V&L はラベル短縮。
+
+### [UX-HISTORY-FILTER-SORT] 履歴: 期間タブ削除 + q/range/sort
+- Completed: 2026-04-22 / (next commit)
+
+`PeriodTabs` 削除、`HistoryToolbar` 新規。検索・点数範囲 chip・ソート select
+を `getHistoryWithSessions` と連携。
+
+### [UX-SYNC-BUTTON-MOVE] 同期ボタンを Home → Settings
+- Completed: 2026-04-22 / (next commit)
+
+SyncCard を `/settings` に移植、Dashboard からは削除。cron で毎日自動。
+
+### [UX-STATS-ANALYSIS] 統計ページに分析インサイト
+- Completed: 2026-04-22 / (next commit)
+
+`/stats` に `deriveInsights()` で導出した月次ハイライト文と、
+`diagnoseHistoryOverall` による R21/R23/R24 findings カードを追加。
+
+### [UX-REPERTOIRE-DETAIL-AGGR-REMOVE] 曲詳細から cross-song 集計除去
+- Completed: 2026-04-22 / (next commit)
+
+`diagnoseHistory` を `ForSong` (R20/R22) と `Overall` (R21/R23/R24) に
+分離。曲詳細は ForSong のみ、全体系は /stats 専用に。
+
 ### [UX-HOME-STATS] Home 情報量拡充 + /stats ドリルダウン
 - Completed: 2026-04-22 / Commit: `76c5f92`
 - Labels: `UX`, `FEAT`

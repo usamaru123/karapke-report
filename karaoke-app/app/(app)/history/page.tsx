@@ -1,27 +1,26 @@
+import { HistoryToolbar } from "@/components/features/history/HistoryToolbar";
 import { InfoBanner } from "@/components/features/history/InfoBanner";
-import { PeriodTabs } from "@/components/features/history/PeriodTabs";
 import { SessionGroup } from "@/components/features/history/SessionGroup";
 import {
   getHistoryWithSessions,
-  type PeriodFilter,
+  parseHistoryRange,
+  parseHistorySort,
 } from "@/lib/queries/history";
-
-const PERIODS: readonly PeriodFilter[] = ["this_month", "this_year", "all"];
-
-function parsePeriod(v: string | undefined): PeriodFilter {
-  return (PERIODS as readonly string[]).includes(v ?? "")
-    ? (v as PeriodFilter)
-    : "this_month";
-}
 
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ q?: string; range?: string; sort?: string }>;
 }) {
   const sp = await searchParams;
-  const period = parsePeriod(sp.period);
-  const sessions = await getHistoryWithSessions({ period });
+  const range = parseHistoryRange(sp.range);
+  const sort = parseHistorySort(sp.sort);
+  const q = (sp.q ?? "").trim();
+  const sessions = await getHistoryWithSessions({
+    range,
+    sort,
+    search: q || undefined,
+  });
   const totalCount = sessions.reduce((acc, s) => acc + s.scores.length, 0);
 
   return (
@@ -35,11 +34,11 @@ export default async function HistoryPage({
         </h1>
       </header>
 
-      <PeriodTabs active={period} />
+      <HistoryToolbar range={range} sort={sort} initialQuery={q} />
 
       {sessions.length === 0 ? (
         <p className="px-6 py-16 text-center text-sm text-white/50">
-          この期間に歌唱データはありません。
+          条件に合う歌唱データがありません。
         </p>
       ) : (
         <div>

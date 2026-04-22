@@ -11,7 +11,7 @@ import { SongInfoHero } from "@/components/features/repertoire/detail/SongInfoHe
 import { VocalRangeBar } from "@/components/features/repertoire/detail/VocalRangeBar";
 import { buildHistoryInput } from "@/lib/advice/build-history-input";
 import { buildRobustScoreInput } from "@/lib/advice/build-robust-score-input";
-import { diagnoseHistory } from "@/lib/advice/diagnose-history";
+import { diagnoseHistoryForSong } from "@/lib/advice/diagnose-history";
 import { diagnoseScore, sortFindings } from "@/lib/advice/diagnose-score";
 import { recommendKey } from "@/lib/key-recommendation";
 import { getAggregateAdviceData } from "@/lib/queries/advice";
@@ -65,9 +65,12 @@ export default async function RepertoireDetailPage({
     ? sortFindings(diagnoseScore(robustInput))
     : [];
 
-  // Aggregate advice from the whole history, focused on the current song.
+  // Song-scoped aggregate advice only (R20 recommended key, R22 same-song
+  // trend). Cross-song findings (R21 stagnant axis, R23 bonus correlation,
+  // R24 song gap) live on /stats where they belong — showing them here was
+  // confusing since they're not really about this song.
   const aggregateFindings = sortFindings(
-    diagnoseHistory(
+    diagnoseHistoryForSong(
       buildHistoryInput(
         aggregateData.scores,
         aggregateData.songsById,

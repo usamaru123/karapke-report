@@ -1,27 +1,38 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ConfidenceLevel, Repertoire, Score, Song } from "@/types/domain";
 
-// Confidence values exposed as filter chips. Typed as a const tuple so we get
-// a narrow union out of `includes()`.
-const CONFIDENCE_FILTERS = [
+export type RepertoireStatusFilter = "all" | "over90" | "recent" | "favorite";
+export type RepertoireConfidenceFilter = ConfidenceLevel | "any";
+export type RepertoireSort = "best_score" | "recent" | "title" | "added";
+
+const STATUS_VALUES: readonly RepertoireStatusFilter[] = [
+  "all",
+  "over90",
+  "recent",
+  "favorite",
+];
+const CONFIDENCE_VALUES: readonly RepertoireConfidenceFilter[] = [
+  "any",
   "unset",
   "wanna_sing",
   "practicing",
+  "normal",
   "confident",
   "shelf",
-] as const satisfies readonly ConfidenceLevel[];
-type ConfidenceFilter = (typeof CONFIDENCE_FILTERS)[number];
-function isConfidenceFilter(v: string): v is ConfidenceFilter {
-  return (CONFIDENCE_FILTERS as readonly string[]).includes(v);
-}
+];
 
-export type RepertoireFilter =
-  | "all"
-  | "over90"
-  | "recent"
-  | "favorite"
-  | ConfidenceFilter;
-export type RepertoireSort = "best_score" | "recent" | "title" | "added";
+export function parseStatusFilter(v: string | undefined): RepertoireStatusFilter {
+  return (STATUS_VALUES as readonly string[]).includes(v ?? "")
+    ? (v as RepertoireStatusFilter)
+    : "all";
+}
+export function parseConfidenceFilter(
+  v: string | undefined,
+): RepertoireConfidenceFilter {
+  return (CONFIDENCE_VALUES as readonly string[]).includes(v ?? "")
+    ? (v as RepertoireConfidenceFilter)
+    : "any";
+}
 
 export type RepertoireWithMeta = Repertoire & {
   song: Song;
@@ -34,20 +45,22 @@ type RepertoireRow = Repertoire & {
 };
 
 export async function getRepertoire(opts?: {
-  filter?: RepertoireFilter;
+  status?: RepertoireStatusFilter;
+  confidence?: RepertoireConfidenceFilter;
   sort?: RepertoireSort;
   search?: string;
 }): Promise<RepertoireWithMeta[]> {
   const supabase = await createClient();
 
-  // `repertoire` has no direct FK to `scores` (both link to `songs`).
-  // Fetch repertoire with its song, then aggregate per-song score stats separately.
+  // Apply DB-side narrowings first (indexable). Favorite + confidence combine
+  // safely because they hit different columns. status `over90` / `recent` rely
+  // on joined scores, so those remain in-memory filters below.
   let query = supabase.from("repertoire").select("*, song:songs(*)");
-
-  if (opts?.filter === "favorite") {
+  if (opts?.status === "favorite") {
     query = query.eq("is_favorite", true);
-  } else if (opts?.filter && isConfidenceFilter(opts.filter)) {
-    query = query.eq("confidence", opts.filter);
+  }
+  if (opts?.confidence && opts.confidence !== "any") {
+    query = query.eq("confidence", opts.confidence);
   }
 
   const { data, error } = await query;
@@ -91,9 +104,9 @@ export async function getRepertoire(opts?: {
   });
 
   let filtered = enriched;
-  if (opts?.filter === "over90") {
+  if (opts?.status === "over90") {
     filtered = enriched.filter((r) => (r.best_score ?? 0) >= 90);
-  } else if (opts?.filter === "recent") {
+  } else if (opts?.status === "recent") {
     const threshold = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
     filtered = enriched.filter(
       (r) => !r.last_sung_at || r.last_sung_at < threshold,

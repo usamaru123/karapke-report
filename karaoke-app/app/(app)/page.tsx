@@ -4,7 +4,6 @@ import { KpiGrid } from "@/components/features/dashboard/KpiGrid";
 import { MonthlySummaryCard } from "@/components/features/dashboard/MonthlySummaryCard";
 import { OnboardingBanner } from "@/components/features/dashboard/OnboardingBanner";
 import { RecentScoreList } from "@/components/features/dashboard/RecentScoreList";
-import { SyncCard } from "@/components/features/dashboard/SyncCard";
 import {
   getDashboardSummary,
   getHeroBest,
@@ -59,7 +58,6 @@ export default async function DashboardPage() {
       <MonthlySummaryCard summary={monthly} />
       <KpiGrid summary={summary} />
       <RecentScoreList scores={recent} />
-      <SyncCard lastSyncAt={summary.lastSyncAt} />
     </div>
   );
 }

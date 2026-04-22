@@ -3,6 +3,8 @@ import Link from "next/link";
 import { CardNoForm } from "@/components/features/settings/CardNoForm";
 import { DisplayNameForm } from "@/components/features/settings/DisplayNameForm";
 import { SignOutButton } from "@/components/features/settings/SignOutButton";
+import { SyncCard } from "@/components/features/dashboard/SyncCard";
+import { getDashboardSummary } from "@/lib/queries/dashboard";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
@@ -14,7 +16,6 @@ export default async function SettingsPage() {
   let cardNo: string | null = null;
   let displayName: string | null = null;
   if (user) {
-    // RLS allows the user to read their own profile; service_role not needed here.
     const { data } = await supabase
       .from("profiles")
       .select("cdm_card_no, display_name")
@@ -27,6 +28,8 @@ export default async function SettingsPage() {
   const hasCardNo = typeof cardNo === "string" && cardNo.length >= 10;
   const maskedSuffix =
     hasCardNo && cardNo ? cardNo.slice(-4) : null;
+
+  const summary = await getDashboardSummary();
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 pt-6 pb-24 md:pb-6">
@@ -64,6 +67,16 @@ export default async function SettingsPage() {
 
         <div className="mt-4">
           <CardNoForm hasCardNo={hasCardNo} maskedSuffix={maskedSuffix} />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold text-white">同期</h2>
+        <p className="mt-1 text-xs text-white/60">
+          自動で毎日 12:00 頃 (JST) に取り込まれます。手動で今すぐ取り込みたい場合:
+        </p>
+        <div className="mt-3">
+          <SyncCard lastSyncAt={summary.lastSyncAt} />
         </div>
       </section>
 

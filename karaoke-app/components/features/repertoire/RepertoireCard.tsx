@@ -10,6 +10,11 @@ import { evaluateVocalRange } from "@/lib/vocal-range";
 
 type Props = { item: RepertoireWithMeta; userRange: UserVocalRange };
 
+/**
+ * Repertoire list row. The whole card acts as a link to /repertoire/[id],
+ * but the confidence quick-pick sits on a z-index above the
+ * absolute-positioned <Link> so its tap target doesn't navigate away.
+ */
 export function RepertoireCard({ item, userRange }: Props) {
   const { song } = item;
   const verdict = evaluateVocalRange(
@@ -18,11 +23,14 @@ export function RepertoireCard({ item, userRange }: Props) {
   );
 
   return (
-    <Link
-      href={`/repertoire/${item.id}`}
-      className="block min-h-16 border-b border-white/10 px-4 py-3 transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.05] focus-visible:outline-none"
-    >
-      <div className="flex items-start justify-between gap-3">
+    <div className="relative min-h-16 border-b border-white/10 px-4 py-3 transition-colors hover:bg-white/[0.03] focus-within:bg-white/[0.05]">
+      <Link
+        href={`/repertoire/${item.id}`}
+        className="absolute inset-0 z-0 focus-visible:outline-none"
+        aria-label={`${song.title} の詳細を開く`}
+      />
+
+      <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-semibold text-white">
             {song.title}
@@ -37,27 +45,19 @@ export function RepertoireCard({ item, userRange }: Props) {
         <ScoreBadge value={item.best_score} size="md" />
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          {item.tags.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-white/60"
-            >
-              #{tag}
-            </span>
-          ))}
+      <div className="relative z-10 mt-2 flex items-center justify-between gap-3">
+        <div className="pointer-events-auto flex min-w-0 flex-wrap items-center gap-2">
           <ConfidenceQuickPick
             repertoireId={item.id}
             initial={item.confidence}
-            size="sm"
+            size="md"
           />
           <VocalRangeBadge verdict={verdict} size="sm" />
         </div>
-        <div className="shrink-0 text-[11px] text-white/50">
-          最終歌唱: {formatShortDate(item.last_sung_at)}
+        <div className="pointer-events-none shrink-0 text-[11px] text-white/50">
+          最終: {formatShortDate(item.last_sung_at)}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

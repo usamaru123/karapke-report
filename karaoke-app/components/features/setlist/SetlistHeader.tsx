@@ -1,10 +1,10 @@
 "use client";
 
-import { ChevronLeft, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, Pencil, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { deleteSetlist } from "@/lib/actions/setlists";
+import { deleteSetlist, updateSetlistMeta } from "@/lib/actions/setlists";
 
 type Props = {
   setlistId: string;
@@ -15,6 +15,10 @@ type Props = {
 export function SetlistHeader({ setlistId, name, scheduledFor }: Props) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(name);
+  const [draftDate, setDraftDate] = useState(scheduledFor ?? "");
+  const [editError, setEditError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -22,6 +26,37 @@ export function SetlistHeader({ setlistId, name, scheduledFor }: Props) {
       await deleteSetlist(setlistId);
       router.push("/setlists");
       router.refresh();
+    });
+  }
+
+  function startEdit() {
+    setDraftName(name);
+    setDraftDate(scheduledFor ?? "");
+    setEditError(null);
+    setEditing(true);
+  }
+
+  function cancelEdit() {
+    setEditing(false);
+    setEditError(null);
+  }
+
+  function saveEdit() {
+    setEditError(null);
+    startTransition(async () => {
+      try {
+        await updateSetlistMeta(setlistId, {
+          name: draftName,
+          // Treat empty string as "clear the scheduled date".
+          scheduledFor: draftDate === "" ? null : draftDate,
+        });
+        setEditing(false);
+        router.refresh();
+      } catch (e) {
+        setEditError(
+          e instanceof Error ? e.message : "保存に失敗しました",
+        );
+      }
     });
   }
 
@@ -38,6 +73,16 @@ export function SetlistHeader({ setlistId, name, scheduledFor }: Props) {
         <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-white">
           {name}
         </h1>
+        {!editing && (
+          <button
+            type="button"
+            aria-label="セットリストを編集"
+            onClick={startEdit}
+            className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+          >
+            <Pencil size={16} />
+          </button>
+        )}
         <button
           type="button"
           aria-label="セットリストを削除"
@@ -48,10 +93,64 @@ export function SetlistHeader({ setlistId, name, scheduledFor }: Props) {
         </button>
       </header>
 
-      {scheduledFor && (
+      {!editing && scheduledFor && (
         <p className="pl-10 text-xs text-white/50 tabular-nums">
           開催予定日: {scheduledFor}
         </p>
+      )}
+
+      {editing && (
+        <div className="mt-1 rounded-lg border border-white/10 bg-bg-surface p-3">
+          <label className="block">
+            <span className="mb-1 block text-xs text-white/60">名前</span>
+            <input
+              type="text"
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              maxLength={80}
+              autoFocus
+              className="w-full rounded-md border border-white/10 bg-bg-elevated px-3 py-2 text-sm text-white outline-none focus:border-neon-cyan"
+            />
+          </label>
+          <label className="mt-3 block">
+            <span className="mb-1 block text-xs text-white/60">
+              開催予定日 (任意)
+            </span>
+            <input
+              type="date"
+              value={draftDate}
+              onChange={(e) => setDraftDate(e.target.value)}
+              className="w-full rounded-md border border-white/10 bg-bg-elevated px-3 py-2 text-sm text-white outline-none focus:border-neon-cyan"
+            />
+          </label>
+
+          {editError && (
+            <p className="mt-2 rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              {editError}
+            </p>
+          )}
+
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={cancelEdit}
+              disabled={isPending}
+              className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-white/70 hover:bg-white/5 disabled:opacity-50"
+            >
+              <X size={14} />
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={saveEdit}
+              disabled={isPending || draftName.trim().length === 0}
+              className="flex items-center gap-1 rounded-md border border-neon-cyan/40 bg-neon-cyan/10 px-3 py-1.5 text-sm font-semibold text-neon-cyan shadow-glow-cyan disabled:opacity-40"
+            >
+              <Check size={14} />
+              {isPending ? "保存中..." : "保存"}
+            </button>
+          </div>
+        </div>
       )}
 
       {confirming && (

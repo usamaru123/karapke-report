@@ -1,5 +1,7 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FileClock } from "lucide-react";
+import Link from "next/link";
 import { CardNoForm } from "@/components/features/settings/CardNoForm";
+import { DisplayNameForm } from "@/components/features/settings/DisplayNameForm";
 import { SignOutButton } from "@/components/features/settings/SignOutButton";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,14 +12,16 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser();
 
   let cardNo: string | null = null;
+  let displayName: string | null = null;
   if (user) {
     // RLS allows the user to read their own profile; service_role not needed here.
     const { data } = await supabase
       .from("profiles")
-      .select("cdm_card_no")
+      .select("cdm_card_no, display_name")
       .eq("id", user.id)
       .maybeSingle();
     cardNo = data?.cdm_card_no ?? null;
+    displayName = data?.display_name ?? null;
   }
 
   const hasCardNo = typeof cardNo === "string" && cardNo.length >= 10;
@@ -32,6 +36,16 @@ export default async function SettingsPage() {
           サインイン中: {user?.email ?? "—"}
         </p>
       </header>
+
+      <section>
+        <h2 className="text-sm font-semibold text-white">表示名</h2>
+        <p className="mt-1 text-xs text-white/60">
+          ダッシュボード冒頭の挨拶などに使用されます。未設定時は email のローカル部が使われます。
+        </p>
+        <div className="mt-3">
+          <DisplayNameForm initial={displayName} />
+        </div>
+      </section>
 
       <section>
         <h2 className="text-sm font-semibold text-white">DAM カード番号</h2>
@@ -51,6 +65,20 @@ export default async function SettingsPage() {
         <div className="mt-4">
           <CardNoForm hasCardNo={hasCardNo} maskedSuffix={maskedSuffix} />
         </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold text-white">同期ログ</h2>
+        <p className="mt-1 text-xs text-white/60">
+          定期同期の成功/失敗履歴を確認できます。
+        </p>
+        <Link
+          href="/settings/sync-logs"
+          className="mt-3 inline-flex items-center gap-2 rounded-md border border-white/10 bg-bg-surface px-3 py-2 text-xs text-white/80 hover:bg-white/5"
+        >
+          <FileClock size={13} />
+          同期ログを開く
+        </Link>
       </section>
 
       <section>

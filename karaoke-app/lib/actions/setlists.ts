@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { validateSetlistMetaPatch } from "@/lib/validation/setlists";
 
 export async function createSetlist(input: {
   name: string;
@@ -87,6 +88,24 @@ export async function deleteSetlistItem(itemId: string, setlistId: string) {
     .eq("id", itemId);
   if (error) throw error;
   revalidatePath(`/setlists/${setlistId}`);
+}
+
+export async function updateSetlistMeta(
+  setlistId: string,
+  input: { name?: string; scheduledFor?: string | null },
+): Promise<void> {
+  const patch = validateSetlistMetaPatch(input);
+  if (Object.keys(patch).length === 0) return;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("setlists")
+    .update(patch)
+    .eq("id", setlistId);
+  if (error) throw error;
+
+  revalidatePath(`/setlists/${setlistId}`);
+  revalidatePath("/setlists");
 }
 
 export async function togglePinSetlist(setlistId: string, pinned: boolean) {

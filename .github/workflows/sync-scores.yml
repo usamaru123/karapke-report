@@ -12,6 +12,11 @@ name: Daily DAM Sync
 #                             synced. MVP is single-user; a multi-user
 #                             rewrite would iterate over profiles on the
 #                             Supabase side instead and drop this secret.
+#
+# Optional repository secrets:
+#   DISCORD_WEBHOOK_URL       If set, a message is POSTed here whenever the
+#                             sync job fails (cron or manual). Leave unset to
+#                             silence notifications — the step will no-op.
 
 on:
   schedule:
@@ -32,6 +37,7 @@ jobs:
     timeout-minutes: 3
     steps:
       - name: Invoke sync-scores Edge Function
+        id: invoke
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -55,7 +61,54 @@ jobs:
           cat /tmp/sync.out
           echo
 
+          # Expose the last ~500 chars of the body to later steps for the
+          # failure notification. Multi-line outputs need the << heredoc
+          # syntax; truncate to keep Discord's 2000-char limit in mind.
+          {
+            echo "http_code=${http_code}"
+            echo "body<<EOF"
+            tail -c 500 /tmp/sync.out
+            echo
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
           if [ "${http_code}" -lt 200 ] || [ "${http_code}" -ge 300 ]; then
             echo "::error::Edge Function returned HTTP ${http_code}"
             exit 1
           fi
+
+      - name: Notify Discord on failure
+        # Only runs when a previous step fails. The `DISCORD_WEBHOOK_URL` is
+        # optional — if unset, `curl` hits an empty URL and fails, so we
+        # short-circuit first. `continue-on-error: true` keeps the workflow
+        # itself marked as failed (so the GH UI still shows the red X).
+        if: ${{ failure() }}
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          HTTP_CODE: ${{ steps.invoke.outputs.http_code }}
+          BODY: ${{ steps.invoke.outputs.body }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -eu
+          if [ -z "${DISCORD_WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL not set — skipping notification."
+            exit 0
+          fi
+
+          # Build the JSON payload with jq so that body contents with quotes/
+          # newlines are escaped safely. Discord truncates content > 2000
+          # chars; we build a compact message and include a link to the run.
+          payload=$(jq -n \
+            --arg code "${HTTP_CODE:-n/a}" \
+            --arg body "${BODY:-<no body captured>}" \
+            --arg url "${RUN_URL}" \
+            '{
+              username: "karaoke-sync",
+              content: ("🚨 DAM 同期 cron が失敗しました\nHTTP: " + $code + "\n" + $url + "\n```\n" + ($body | .[0:1500]) + "\n```")
+            }')
+
+          curl -sS -X POST "${DISCORD_WEBHOOK_URL}" \
+            -H "Content-Type: application/json" \
+            -d "${payload}" \
+            -o /dev/null -w "Discord webhook HTTP %{http_code}\n"

@@ -244,6 +244,30 @@ Claude Code を使えば Phase 2-5 は大幅短縮可能。人間の判断が必
 - S2a: `diagnose-score.ts` orchestrator + sortFindings (severity > confidence > ruleId)
 - S4: UI (AdviceSection / FindingCard / SourceBadge / 曲詳細ページに統合)
 
+### 2026-04-22 続き: S2b 技法系ルール 6 本
+
+#### ✅ 完了
+
+- `ScoreInput.raw_xml` フィールド追加 (rules が extractors 越しに任意フィールド読めるように)
+- `thresholds.ts` に R03/R05/R07/R11/R12/R14 の閾値を集約 (根拠コメント付き)
+- R03 音程スイートスポット (`radarChartPitch` 95↑ warn / 85↓ tip、inferred+low)
+- R05 ビブラート型 (N / ちりめん A 系 / 非ボックス D-H / 推奨 B-3 C-3 / 持続 < 5s、official+empirical)
+- R07 技法単調性 (8 種技法の使用カテゴリ数 ≤ 2 で発火、使用技法名を明記)
+- R11 Ai 感性 減点区間 (24 区間の最大減点 > 30 で発火、B'01/B'10 セクションラベル付与)
+- R12 全国平均比較 (軸ごとに自 vs 平均、-5↓ = 伸びしろ tip / +10↑ = 得意 info、最大 1 件ずつ)
+- R14 メロディセクション区分 (B'01 群 vs B'10 群 の平均音程差 ≥ 8、inferred+low、抽象ラベル)
+- orchestrator (`diagnose-score.ts`) に 6 本登録 → 計 12 単発ルール運用
+- 追加テスト 6 ファイル + `buildRawXml` ヘルパで両 prefix 透過 + null 入力耐性確認
+- 計 **183 テスト / 22 ファイル** 全緑
+
+#### ロードマップ消化
+
+- S2b 完了 → 残る単発系は S2c (R08) のみ
+
+---
+
+### 2026-04-22 運用・整理
+
 **運用・整理**
 - `CLAUDE.md` 新規 (デプロイ手順 / push 認証トラブルの PAT 回避策 / secrets 管理 / .env キー一覧)
 - PoC (`poc/karaoke-sync-poc/`) 退役: Python 本体・venv 削除 (-92 MB)、`.env` を repo root に統合
@@ -255,7 +279,7 @@ Claude Code を使えば Phase 2-5 は大幅短縮可能。人間の判断が必
 
 | 項目 | 想定工数 | ブロッカー |
 |---|---|---|
-| Advice S2b 技法系ルール (R03 音程スイート / R05 ビブラート型 / R07 技法単調 / R11 Ai 減点区間 / R12 全国平均 / R14 メロディ区分) | 2h | なし |
+| **歌唱詳細画面 `/scores/[id]`** (履歴 ScoreRow から遷移、レーダー・24 区間・全技法カウント・単発アドバイスを一画面に) | 2-2.5h | なし (既存 ScoreRadarChart / AdviceSection 流用可) |
 | Advice S2c 区間系 (R08 24 区間弱点) | 1h | なし |
 | Advice S2d 要検証系 (R13 maxTotalPoints) | 1.5h | maxTotalPoints 意味の別曲サンプル検証 |
 | Advice S3 集計診断 (R20-R24: recommendKey 統合、伸び悩み、改善トレンド、散布診断、得意→苦手転用) | 2h | S2a 済 |

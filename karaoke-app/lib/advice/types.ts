@@ -29,6 +29,14 @@ export type ScoreInput = {
   /** User's aggregate observed range (for R09). Same shape as UserVocalRange. */
   user_range_low: number | null;
   user_range_high: number | null;
+  /**
+   * The raw DAM XML-as-JSON blob for rules that need fields beyond the
+   * promoted columns (R05 vibrato meta, R07 technique counts, R11 Ai deduct
+   * graph, R12 national average, R14 melody section flags). Null for records
+   * synced before detailFlg=1 was enabled, in which case the dependent rules
+   * no-op silently.
+   */
+  raw_xml: unknown | null;
 };
 
 export type Severity = "info" | "tip" | "warn";

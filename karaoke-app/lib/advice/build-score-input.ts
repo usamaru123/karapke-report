@@ -49,5 +49,6 @@ export function buildScoreInput(
     song_range_highest: toNumberOrNull(song.vocal_range_highest),
     user_range_low: userRange.low,
     user_range_high: userRange.high,
+    raw_xml: score.raw_xml ?? null,
   };
 }

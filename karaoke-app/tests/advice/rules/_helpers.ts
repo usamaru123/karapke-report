@@ -20,6 +20,21 @@ export function buildScore(overrides: Partial<ScoreInput> = {}): ScoreInput {
     song_range_highest: 72,
     user_range_low: 48,
     user_range_high: 74,
+    raw_xml: null,
     ...overrides,
   };
+}
+
+/**
+ * Baseline raw_xml in the PoC shape (single `@` + outer `scoring` wrapper),
+ * so tests can opt in to rules that consume raw_xml without wiring up all 137
+ * fields. Pass an `attrs` object of keys WITHOUT the prefix; they'll be
+ * joined with `@`.
+ */
+export function buildRawXml(attrs: Record<string, string | number>): unknown {
+  const prefixed: Record<string, string> = {};
+  for (const [k, v] of Object.entries(attrs)) {
+    prefixed[`@${k}`] = String(v);
+  }
+  return { scoring: prefixed };
 }

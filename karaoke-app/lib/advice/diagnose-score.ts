@@ -10,12 +10,18 @@
  * testability.
  */
 
+import { evaluateAiDeductSegment } from "./rules/ai-deduct-segment";
 import { evaluateHeartRouletteNote } from "./rules/heart-roulette-note";
 import { evaluateIntonationCeiling } from "./rules/intonation-ceiling";
 import { evaluateKeyFitness } from "./rules/key-fitness";
+import { evaluateMelodySection } from "./rules/melody-section";
+import { evaluateNationalAverage } from "./rules/national-average";
+import { evaluatePitchSweetSpot } from "./rules/pitch-sweet-spot";
 import { evaluateRadarWeakestAxis } from "./rules/radar-weakest-axis";
 import { evaluateRhythmTiming } from "./rules/rhythm-timing";
 import { evaluateScoreBonusSplit } from "./rules/score-bonus-split";
+import { evaluateTechniqueVariety } from "./rules/technique-variety";
+import { evaluateVibratoType } from "./rules/vibrato-type";
 import type { Finding, ScoreInput, Severity } from "./types";
 
 type RuleFn = (score: ScoreInput) => Finding[];
@@ -23,10 +29,16 @@ type RuleFn = (score: ScoreInput) => Finding[];
 const RULES: RuleFn[] = [
   evaluateScoreBonusSplit, // R01
   evaluateIntonationCeiling, // R02
+  evaluatePitchSweetSpot, // R03
   evaluateRadarWeakestAxis, // R04
+  evaluateVibratoType, // R05
   evaluateRhythmTiming, // R06
+  evaluateTechniqueVariety, // R07
   evaluateKeyFitness, // R09
   evaluateHeartRouletteNote, // R10
+  evaluateAiDeductSegment, // R11
+  evaluateNationalAverage, // R12
+  evaluateMelodySection, // R14
 ];
 
 /** Run every rule and concat their outputs. */

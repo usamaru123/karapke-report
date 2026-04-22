@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type {
   RepertoireConfidenceFilter,
+  RepertoireRangeFilter,
   RepertoireStatusFilter,
 } from "@/lib/queries/repertoire";
 
@@ -31,12 +32,20 @@ const CONFIDENCE_CHIPS: {
   { key: "shelf", label: "封印" },
 ];
 
+const RANGE_CHIPS: { key: RepertoireRangeFilter; label: string }[] = [
+  { key: "any", label: "音域:指定なし" },
+  { key: "in_range", label: "声域内" },
+  { key: "key_tweak", label: "キー調整で可" },
+  { key: "hard", label: "声域外" },
+];
+
 type Props = {
   status: RepertoireStatusFilter;
   confidence: RepertoireConfidenceFilter;
+  range: RepertoireRangeFilter;
 };
 
-export function FilterChips({ status, confidence }: Props) {
+export function FilterChips({ status, confidence, range }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -59,6 +68,12 @@ export function FilterChips({ status, confidence }: Props) {
     navigate((p) => {
       if (next === "any") p.delete("confidence");
       else p.set("confidence", next);
+    });
+  }
+  function setRange(next: RepertoireRangeFilter) {
+    navigate((p) => {
+      if (next === "any") p.delete("range");
+      else p.set("range", next);
     });
   }
 
@@ -96,6 +111,19 @@ export function FilterChips({ status, confidence }: Props) {
             aria-pressed={chip.key === confidence}
             onClick={() => setConfidence(chip.key)}
             className={chipCls(chip.key === confidence)}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {RANGE_CHIPS.map((chip) => (
+          <button
+            key={chip.key}
+            type="button"
+            aria-pressed={chip.key === range}
+            onClick={() => setRange(chip.key)}
+            className={chipCls(chip.key === range)}
           >
             {chip.label}
           </button>

@@ -1,4 +1,3 @@
-import { AddSongFab } from "@/components/features/repertoire/AddSongFab";
 import { FilterChips } from "@/components/features/repertoire/FilterChips";
 import { FilterSummaryBar } from "@/components/features/repertoire/FilterSummaryBar";
 import { RepertoireList } from "@/components/features/repertoire/RepertoireList";
@@ -7,6 +6,7 @@ import { SortMenu } from "@/components/features/repertoire/SortMenu";
 import {
   getRepertoire,
   parseConfidenceFilter,
+  parseRangeFilter,
   parseSort,
   parseStatusFilter,
 } from "@/lib/queries/repertoire";
@@ -18,6 +18,7 @@ export default async function RepertoirePage({
   searchParams: Promise<{
     status?: string;
     confidence?: string;
+    range?: string;
     sort?: string;
     q?: string;
   }>;
@@ -25,11 +26,12 @@ export default async function RepertoirePage({
   const sp = await searchParams;
   const status = parseStatusFilter(sp.status);
   const confidence = parseConfidenceFilter(sp.confidence);
+  const range = parseRangeFilter(sp.range);
   const sort = parseSort(sp.sort);
   const q = (sp.q ?? "").trim();
 
   const [items, userRange] = await Promise.all([
-    getRepertoire({ status, confidence, sort, search: q || undefined }),
+    getRepertoire({ status, confidence, range, sort, search: q || undefined }),
     getUserVocalRange(),
   ]);
 
@@ -45,11 +47,12 @@ export default async function RepertoirePage({
         <SearchBar initialQuery={q} />
       </header>
 
-      <FilterChips status={status} confidence={confidence} />
+      <FilterChips status={status} confidence={confidence} range={range} />
 
       <FilterSummaryBar
         status={status}
         confidence={confidence}
+        range={range}
         search={q}
         total={items.length}
       />
@@ -64,8 +67,6 @@ export default async function RepertoirePage({
         isSearch={q.length > 0}
         clearSearchHref="/repertoire"
       />
-
-      <AddSongFab />
     </div>
   );
 }

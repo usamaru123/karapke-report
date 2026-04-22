@@ -1,8 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUserVocalRange } from "@/lib/queries/user_range";
+import { evaluateVocalRange } from "@/lib/vocal-range";
 import type { ConfidenceLevel, Repertoire, Score, Song } from "@/types/domain";
 
 export type RepertoireStatusFilter = "all" | "over90" | "recent" | "favorite";
 export type RepertoireConfidenceFilter = ConfidenceLevel | "any";
+export type RepertoireRangeFilter = "any" | "in_range" | "key_tweak" | "hard";
+
+const RANGE_VALUES: readonly RepertoireRangeFilter[] = [
+  "any",
+  "in_range",
+  "key_tweak",
+  "hard",
+];
+
+export function parseRangeFilter(
+  v: string | undefined,
+): RepertoireRangeFilter {
+  return (RANGE_VALUES as readonly string[]).includes(v ?? "")
+    ? (v as RepertoireRangeFilter)
+    : "any";
+}
 export type RepertoireSort =
   | "best_score"
   | "recent"
@@ -84,6 +102,7 @@ type RepertoireRow = Repertoire & {
 export async function getRepertoire(opts?: {
   status?: RepertoireStatusFilter;
   confidence?: RepertoireConfidenceFilter;
+  range?: RepertoireRangeFilter;
   sort?: RepertoireSort;
   search?: string;
 }): Promise<RepertoireWithMeta[]> {
@@ -191,6 +210,29 @@ export async function getRepertoire(opts?: {
         r.song.title.toLowerCase().includes(q) ||
         r.song.artist.toLowerCase().includes(q),
     );
+  }
+
+  // Range filter runs in-memory because evaluateVocalRange is pure + fast.
+  // Skipped when `any` to avoid the extra user_range lookup on the default
+  // code path.
+  if (opts?.range && opts.range !== "any") {
+    const userRange = await getUserVocalRange();
+    filtered = filtered.filter((r) => {
+      const verdict = evaluateVocalRange(
+        { low: r.song.vocal_range_lowest, high: r.song.vocal_range_highest },
+        { low: userRange.low, high: userRange.high },
+      );
+      switch (opts.range) {
+        case "in_range":
+          return verdict.kind === "fits";
+        case "key_tweak":
+          return verdict.kind === "key_tweak";
+        case "hard":
+          return verdict.kind === "hard";
+        default:
+          return true;
+      }
+    });
   }
 
   switch (opts?.sort ?? "best_score") {

@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type {
   RepertoireConfidenceFilter,
+  RepertoireRangeFilter,
   RepertoireStatusFilter,
 } from "@/lib/queries/repertoire";
 
@@ -24,9 +25,17 @@ const CONFIDENCE_LABELS: Record<RepertoireConfidenceFilter, string> = {
   shelf: "封印",
 };
 
+const RANGE_LABELS: Record<RepertoireRangeFilter, string> = {
+  any: "音域:指定なし",
+  in_range: "声域内",
+  key_tweak: "キー調整で可",
+  hard: "声域外",
+};
+
 type Props = {
   status: RepertoireStatusFilter;
   confidence: RepertoireConfidenceFilter;
+  range: RepertoireRangeFilter;
   /** Search term (optional). Shown as chip, clearable. */
   search?: string;
   /** Total matched item count for current filter set. */
@@ -41,6 +50,7 @@ type Props = {
 export function FilterSummaryBar({
   status,
   confidence,
+  range,
   search,
   total,
 }: Props) {
@@ -50,20 +60,22 @@ export function FilterSummaryBar({
 
   const hasStatus = status !== "all";
   const hasConfidence = confidence !== "any";
+  const hasRange = range !== "any";
   const hasSearch = !!search && search.length > 0;
 
-  if (!hasStatus && !hasConfidence && !hasSearch) return null;
+  if (!hasStatus && !hasConfidence && !hasRange && !hasSearch) return null;
 
   function clearAll() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("status");
     params.delete("confidence");
+    params.delete("range");
     params.delete("q");
     const q = params.toString();
     router.push(q ? `${pathname}?${q}` : pathname);
   }
 
-  function clearOne(key: "status" | "confidence" | "q") {
+  function clearOne(key: "status" | "confidence" | "range" | "q") {
     const params = new URLSearchParams(searchParams.toString());
     params.delete(key);
     const q = params.toString();
@@ -80,6 +92,11 @@ export function FilterSummaryBar({
     activeChips.push({
       label: CONFIDENCE_LABELS[confidence],
       onClear: () => clearOne("confidence"),
+    });
+  if (hasRange)
+    activeChips.push({
+      label: RANGE_LABELS[range],
+      onClear: () => clearOne("range"),
     });
   if (hasSearch)
     activeChips.push({

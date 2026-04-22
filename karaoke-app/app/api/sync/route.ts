@@ -15,17 +15,46 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabase.functions.invoke("sync-scores", {
-    body: { userId: user.id },
-  });
-  if (error) {
+  try {
+    const { data, error } = await supabase.functions.invoke("sync-scores", {
+      body: { userId: user.id },
+    });
+    if (error) {
+      return NextResponse.json(
+        {
+          error: "sync invocation failed",
+          detail: error.message ?? String(error),
+        },
+        { status: 502 },
+      );
+    }
+    return NextResponse.json(data);
+  } catch (e) {
+    // supabase-js invoke() can throw FunctionsHttpError/FetchError instead of
+    // returning { error }, so we have to catch explicitly.
+    let detail: string;
+    let upstreamStatus: number | undefined;
+    // supabase-js FunctionsHttpError attaches a `context` with a Response.
+    const ctx = (
+      e as { context?: { status?: number; text?: () => Promise<string> } }
+    )?.context;
+    if (ctx?.status !== undefined) {
+      upstreamStatus = ctx.status;
+      try {
+        detail = ctx.text ? await ctx.text() : String(e);
+      } catch {
+        detail = e instanceof Error ? e.message : String(e);
+      }
+    } else {
+      detail = e instanceof Error ? e.message : String(e);
+    }
     return NextResponse.json(
       {
         error: "sync invocation failed",
-        detail: error.message ?? String(error),
+        detail,
+        upstreamStatus,
       },
       { status: 502 },
     );
   }
-  return NextResponse.json(data);
 }

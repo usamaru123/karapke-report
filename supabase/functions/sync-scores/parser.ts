@@ -26,6 +26,7 @@ export type ParsedScore = {
   vibrato_longtone_score: number | null;
   rhythm_score: number | null;
   ai_bonus: number | null;
+  intonation: number | null;
   key_control: number;
   tempo_control: number | null;
   guide_melody: boolean | null;
@@ -166,6 +167,7 @@ export function parseScoringElement(
     vibrato_longtone_score: integer(attr(el, "radarChartVibratoLongtone")),
     rhythm_score: integer(attr(el, "radarChartRhythm")),
     ai_bonus: scaled(attr(el, "aiSensitivityBonus"), 1000),
+    intonation: integer(attr(el, "intonation")),
     key_control: integer(attr(el, "lastPerformKey")) ?? 0,
     tempo_control: integer(attr(el, "tempoControl")),
     guide_melody: guideMelodyRaw === null ? null : guideMelodyRaw === "1",

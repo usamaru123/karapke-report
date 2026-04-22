@@ -115,6 +115,7 @@ export type Database = {
           vibrato_longtone_score: number | null
           rhythm_score: number | null
           ai_bonus: number | null
+          intonation: number | null
           key_control: number
           tempo_control: number | null
           guide_melody: boolean | null
@@ -140,6 +141,7 @@ export type Database = {
           vibrato_longtone_score?: number | null
           rhythm_score?: number | null
           ai_bonus?: number | null
+          intonation?: number | null
           key_control?: number
           tempo_control?: number | null
           guide_melody?: boolean | null
@@ -165,6 +167,7 @@ export type Database = {
           vibrato_longtone_score?: number | null
           rhythm_score?: number | null
           ai_bonus?: number | null
+          intonation?: number | null
           key_control?: number
           tempo_control?: number | null
           guide_melody?: boolean | null

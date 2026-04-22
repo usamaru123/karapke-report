@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AdviceSection } from "@/components/features/advice/AdviceSection";
 import { DetailActions } from "@/components/features/repertoire/detail/DetailActions";
 import { DetailHeader } from "@/components/features/repertoire/detail/DetailHeader";
 import { KeyRecommendation } from "@/components/features/repertoire/detail/KeyRecommendation";
@@ -8,6 +9,8 @@ import { ScoreRadarChart } from "@/components/features/repertoire/detail/ScoreRa
 import { ScoreSummaryCard } from "@/components/features/repertoire/detail/ScoreSummaryCard";
 import { SongInfoHero } from "@/components/features/repertoire/detail/SongInfoHero";
 import { VocalRangeBar } from "@/components/features/repertoire/detail/VocalRangeBar";
+import { buildScoreInput } from "@/lib/advice/build-score-input";
+import { diagnoseScore, sortFindings } from "@/lib/advice/diagnose-score";
 import { recommendKey } from "@/lib/key-recommendation";
 import { getRepertoireDetail } from "@/lib/queries/repertoire";
 import { getUserVocalRange } from "@/lib/queries/user_range";
@@ -43,6 +46,14 @@ export default async function RepertoireDetailPage({
       total_score: s.total_score,
     })),
   );
+
+  // Advice findings from the LATEST score only (single-score rules). Aggregate
+  // rules (R20-R24) land in Stage S3.
+  const findings = latestScore
+    ? sortFindings(
+        diagnoseScore(buildScoreInput(latestScore, song, userRange)),
+      )
+    : [];
 
   return (
     <div className="mx-auto max-w-3xl pb-6">
@@ -104,6 +115,8 @@ export default async function RepertoireDetailPage({
           sampleSize={userRange.sampleSize}
         />
       </div>
+
+      {latestScore && <AdviceSection findings={findings} />}
 
       <KeyRecommendation
         recommendation={keyRec}

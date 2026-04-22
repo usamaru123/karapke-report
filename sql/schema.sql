@@ -181,6 +181,11 @@ CREATE TABLE scores (
   -- Ai bonus points (精密採点Ai-specific)
   ai_bonus              NUMERIC(5,2),
 
+  -- Intonation (抑揚, 0-100). Extracted from raw_xml at sync time.
+  -- Used by the advice engine (docs/feature-design/advice-engine.md R02).
+  -- See sql/migrations/001_scores_intonation.sql for the add-to-existing-DB migration.
+  intonation            SMALLINT,
+
   -- Performance context
   key_control           SMALLINT NOT NULL DEFAULT 0,  -- -6..+6
   tempo_control         SMALLINT,                     -- Nullable, rare

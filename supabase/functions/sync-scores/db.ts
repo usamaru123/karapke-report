@@ -92,6 +92,7 @@ async function upsertScore(
       vibrato_longtone_score: score.vibrato_longtone_score,
       rhythm_score: score.rhythm_score,
       ai_bonus: score.ai_bonus,
+      intonation: score.intonation,
       key_control: score.key_control,
       tempo_control: score.tempo_control,
       guide_melody: score.guide_melody,

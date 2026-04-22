@@ -1,4 +1,4 @@
-import { ExternalLink, FileClock } from "lucide-react";
+import { CalendarDays, Download, ExternalLink, FileClock } from "lucide-react";
 import Link from "next/link";
 import { CardNoForm } from "@/components/features/settings/CardNoForm";
 import { DisplayNameForm } from "@/components/features/settings/DisplayNameForm";
@@ -92,6 +92,42 @@ export default async function SettingsPage() {
           <FileClock size={13} />
           同期ログを開く
         </Link>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold text-white">エクスポート</h2>
+        <p className="mt-1 text-xs text-white/60">
+          データを CSV / カレンダー形式でダウンロードできます。すべてご自身のデータに限定されます (RLS)。
+        </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <a
+            href="/api/export/scores"
+            download
+            className="flex items-center gap-2 rounded-md border border-white/10 bg-bg-surface px-3 py-2 text-xs text-white/80 hover:bg-white/5"
+          >
+            <Download size={13} />
+            採点履歴 (CSV)
+          </a>
+          <a
+            href="/api/export/repertoire"
+            download
+            className="flex items-center gap-2 rounded-md border border-white/10 bg-bg-surface px-3 py-2 text-xs text-white/80 hover:bg-white/5"
+          >
+            <Download size={13} />
+            レパートリー (CSV)
+          </a>
+          <a
+            href="/api/export/setlists.ics"
+            download
+            className="flex items-center gap-2 rounded-md border border-white/10 bg-bg-surface px-3 py-2 text-xs text-white/80 hover:bg-white/5 sm:col-span-2"
+          >
+            <CalendarDays size={13} />
+            セトリの予定を .ics で書き出す
+          </a>
+        </div>
+        <p className="mt-2 text-[10px] text-white/40">
+          .ics ファイルは Google カレンダー / Apple カレンダー等に取り込めます。
+        </p>
       </section>
 
       <section>

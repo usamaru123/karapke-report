@@ -1,10 +1,14 @@
+// Next 16 renamed the root request-interceptor convention from `middleware` to
+// `proxy`. `proxy.ts` runs on the Node.js runtime (edge is not supported here),
+// which lets us use @supabase/ssr without tripping on edge-only limits such as
+// `__dirname is not defined`. See:
+//   node_modules/next/dist/docs/01-app/02-guides/upgrading/version-16.md
+// The matcher config is identical to the prior middleware.ts.
+
 import { type NextRequest, NextResponse } from "next/server";
-// NOTE: relative import (not "@/..." alias). Vercel's edge-function bundler
-// rejected the alias with "unsupported modules" even though `next build`
-// passes locally. Keep this file's imports self-contained / relative.
 import { updateSession } from "./lib/supabase/middleware";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request);
 
   const { pathname } = request.nextUrl;

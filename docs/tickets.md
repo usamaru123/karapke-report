@@ -287,7 +287,7 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 ## ✅ Done (直近 20 件)
 
 ### [UX-STATS-PAST-MONTHS] 過去月ドリルダウン
-- Completed: 2026-04-22 / (next commit)
+- Completed: 2026-04-22 / Commit: `82a010e`
 - Labels: `UX`, `stats`
 
 `/stats?month=YYYY-MM` で任意月のスナップショットを表示。実装要素:

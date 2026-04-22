@@ -6,6 +6,22 @@
 
 import { createClient } from "@/lib/supabase/server";
 
+// Re-export pure helpers from lib/month-key so existing imports keep working.
+// Client components should import from "@/lib/month-key" directly.
+export { parseMonthKey, toMonthKey } from "@/lib/month-key";
+
+type DateWindow = { start: string; end: string };
+function windowForMonth(target: Date | null): { cur: DateWindow; prev: DateWindow } {
+  const now = target ?? new Date();
+  const firstCur = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstNext = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const firstPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return {
+    cur: { start: firstCur.toISOString(), end: firstNext.toISOString() },
+    prev: { start: firstPrev.toISOString(), end: firstCur.toISOString() },
+  };
+}
+
 export type MonthlyBucket = {
   /** ISO 8601 date of the 1st of the month, e.g. "2026-04-01". */
   month: string;
@@ -25,25 +41,28 @@ export type MonthlySummary = {
   } | null;
 };
 
-/** Aggregate this-month vs. last-month metrics for the Dashboard. */
-export async function getMonthlySummary(): Promise<MonthlySummary> {
+/**
+ * Aggregate target-month vs. previous-month metrics. When `targetMonth` is
+ * null, the target is "this month" (clock-now). The returned `delta` uses
+ * `target - previous` — the older "delta since last month" semantics are
+ * preserved so the Home dashboard keeps its existing arrow direction.
+ */
+export async function getMonthlySummary(
+  targetMonth?: Date | null,
+): Promise<MonthlySummary> {
   const supabase = await createClient();
-  const now = new Date();
-  const firstOfThis = new Date(now.getFullYear(), now.getMonth(), 1);
-  const firstOfPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const { cur, prev } = windowForMonth(targetMonth ?? null);
 
   const { data: scores, error } = await supabase
     .from("scores")
     .select("sung_at, total_score")
-    .gte("sung_at", firstOfPrev.toISOString());
+    .gte("sung_at", prev.start)
+    .lt("sung_at", cur.end);
   if (error) throw error;
 
-  const bucket = (month: Date): MonthlyBucket => {
-    const start = month.toISOString();
-    const end =
-      new Date(month.getFullYear(), month.getMonth() + 1, 1).toISOString();
+  const bucket = (win: DateWindow, label: string): MonthlyBucket => {
     const rows = (scores ?? []).filter(
-      (s) => s.sung_at >= start && s.sung_at < end,
+      (s) => s.sung_at >= win.start && s.sung_at < win.end,
     );
     const totals = rows.map((s) => Number(s.total_score));
     const count = rows.length;
@@ -51,16 +70,11 @@ export async function getMonthlySummary(): Promise<MonthlySummary> {
       ? totals.reduce((a, b) => a + b, 0) / totals.length
       : null;
     const best = totals.length ? Math.max(...totals) : null;
-    return {
-      month: month.toISOString().slice(0, 10),
-      count,
-      avg,
-      best,
-    };
+    return { month: label, count, avg, best };
   };
 
-  const current = bucket(firstOfThis);
-  const previous = bucket(firstOfPrev);
+  const current = bucket(cur, cur.start.slice(0, 10));
+  const previous = bucket(prev, prev.start.slice(0, 10));
 
   const delta =
     previous.count === 0 && current.count === 0
@@ -245,6 +259,10 @@ export type SongOrderPerformance = {
 export async function getSongOrderPerformance(opts?: {
   minSessionSize?: number;
   maxPosition?: number;
+  /** ISO start bound (inclusive). When set, restrict to sessions whose first
+   *  song falls within [from, to). Unset = whole history. */
+  from?: string;
+  to?: string;
 }): Promise<SongOrderPerformance> {
   const minSessionSize = opts?.minSessionSize ?? 2;
   const maxPosition = opts?.maxPosition ?? 10;
@@ -253,10 +271,13 @@ export async function getSongOrderPerformance(opts?: {
 
   // Pull non-null-session scores. Loose scores (session_id = NULL) can't be
   // ordered, so we skip them rather than fake a position.
-  const { data, error } = await supabase
+  let q = supabase
     .from("scores")
     .select("session_id, sung_at, total_score")
-    .not("session_id", "is", null)
+    .not("session_id", "is", null);
+  if (opts?.from) q = q.gte("sung_at", opts.from);
+  if (opts?.to) q = q.lt("sung_at", opts.to);
+  const { data, error } = await q
     .order("session_id", { ascending: true })
     .order("sung_at", { ascending: true });
   if (error) throw error;
@@ -332,11 +353,15 @@ export type TopSong = {
  */
 export async function getTopSongsByBest(
   limit = 10,
+  opts?: { from?: string; to?: string },
 ): Promise<TopSong[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let q = supabase
     .from("scores")
     .select("song_id, total_score, song:songs(id, title, artist)");
+  if (opts?.from) q = q.gte("sung_at", opts.from);
+  if (opts?.to) q = q.lt("sung_at", opts.to);
+  const { data, error } = await q;
   if (error) throw error;
 
   type Row = {
@@ -380,14 +405,23 @@ export type AxisAverages = {
   sampleSize: number;
 };
 
-/** 5-axis radar averages over the user's entire history. */
-export async function getOverallAxisAverages(): Promise<AxisAverages> {
+/**
+ * 5-axis radar averages over the user's entire history, or a [from, to)
+ * window when provided.
+ */
+export async function getOverallAxisAverages(opts?: {
+  from?: string;
+  to?: string;
+}): Promise<AxisAverages> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let q = supabase
     .from("scores")
     .select(
       "pitch_score, stability_score, expression_score, vibrato_longtone_score, rhythm_score",
     );
+  if (opts?.from) q = q.gte("sung_at", opts.from);
+  if (opts?.to) q = q.lt("sung_at", opts.to);
+  const { data, error } = await q;
   if (error) throw error;
 
   const sums = {

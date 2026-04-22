@@ -286,6 +286,21 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 
 ## ✅ Done (直近 20 件)
 
+### [UX-STATS-PAST-MONTHS] 過去月ドリルダウン
+- Completed: 2026-04-22 / (next commit)
+- Labels: `UX`, `stats`
+
+`/stats?month=YYYY-MM` で任意月のスナップショットを表示。実装要素:
+- `lib/month-key.ts` に `parseMonthKey` / `toMonthKey` を抽出 (client/server 両方使う pure 関数)
+- `getMonthlySummary` を `targetMonth?: Date` 受け取り版にリファクタ
+- `getOverallAxisAverages` / `getTopSongsByBest` / `getSongOrderPerformance`
+  に `{ from?, to? }` オプション追加
+- `MonthPicker` component (← 前月 / 次月 → + dropdown) 新設
+- `MonthlyTrendChart` のバーを `onClick` で `/stats?month=YYYY-MM` へ遷移
+- Stats page がヘッダに「YYYY年M月」を表示、未来方向は disable、最新月は
+  dropdown に「(最新)」バッジ
+- アドバイスセクションは単月ドリルダウン時は非表示 (cross-session パターンのため単月は意味薄)
+
 ### [UX-WARMUP-CURVE] 曲順 × 得点の平均チャート (喉の温まり曲線)
 - Completed: 2026-04-22 / Commit: `7befcd6`
 - Labels: `UX`, `stats`

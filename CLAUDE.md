@@ -2,9 +2,32 @@
 
 Next.js アプリ固有の規約は `karaoke-app/AGENTS.md` を参照。ここは**リポジトリ横断**の最小限の運用ルールのみ。
 
-## 必須: 進捗は `docs/implementation-roadmap.md` の Progress Log に記録
+## 必須: チケット管理 `docs/tickets.md`
 
-機能実装完了 / 設計書作成 / 未着手タスク識別 / ブロック発生 時は、同ファイル末尾の Progress Log に**追記**する（既存ログは書き換えない）。日付セクション (`### YYYY-MM-DD`) + ✅完了 / ⚠️未着手 / 🟦ブロック中 の 3 区分。typo や単発の質問はスキップで可。
+**正典はここ**。Kanban 4 カラム (In Progress / Blocked / Backlog / Done)。
+
+### 更新タイミング
+
+| 操作 | 必須 |
+|---|---|
+| 作業着手 | Backlog → In Progress、Updated 日付 |
+| 完了 | In Progress → Done、Completed 日付 + commit SHA |
+| 外部要因でストップ | → Blocked、Blocker を明記 |
+| 新規タスク発見 | Backlog に追加 (Priority 付与) |
+
+### チケット ID 命名
+
+`{CATEGORY}-{TOPIC}` — `ADV` / `FEAT` / `UX` / `PERF` / `DATA` / `INFRA` / `DOCS` / `RESEARCH`。
+連番ではなく文脈 id を優先。
+
+### スキップしていいケース
+
+typo 修正・フォーマット調整・依存 bump のみ。1 セッション完結の質問。
+
+### 過去履歴
+
+2026-04-22 までの日記的記録は `docs/implementation-roadmap.md` の
+Progress Log セクションに保持 (今後は追記しない)。
 
 ## 構造の注意
 

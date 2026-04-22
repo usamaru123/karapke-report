@@ -9,9 +9,12 @@ import { ScoreRadarChart } from "@/components/features/repertoire/detail/ScoreRa
 import { ScoreSummaryCard } from "@/components/features/repertoire/detail/ScoreSummaryCard";
 import { SongInfoHero } from "@/components/features/repertoire/detail/SongInfoHero";
 import { VocalRangeBar } from "@/components/features/repertoire/detail/VocalRangeBar";
+import { buildHistoryInput } from "@/lib/advice/build-history-input";
 import { buildScoreInput } from "@/lib/advice/build-score-input";
+import { diagnoseHistory } from "@/lib/advice/diagnose-history";
 import { diagnoseScore, sortFindings } from "@/lib/advice/diagnose-score";
 import { recommendKey } from "@/lib/key-recommendation";
+import { getAggregateAdviceData } from "@/lib/queries/advice";
 import { getRepertoireDetail } from "@/lib/queries/repertoire";
 import { getUserVocalRange } from "@/lib/queries/user_range";
 
@@ -33,7 +36,10 @@ export default async function RepertoireDetailPage({
     notFound();
   }
 
-  const userRange = await getUserVocalRange();
+  const [userRange, aggregateData] = await Promise.all([
+    getUserVocalRange(),
+    getAggregateAdviceData(),
+  ]);
   const { repertoire, song, scores, stats } = detail;
   const latestScore = scores[0] ?? null;
   const recent10 = scores.slice(0, 10).map((s) => ({
@@ -47,13 +53,23 @@ export default async function RepertoireDetailPage({
     })),
   );
 
-  // Advice findings from the LATEST score only (single-score rules). Aggregate
-  // rules (R20-R24) land in Stage S3.
+  // Single-score advice for the latest score.
   const findings = latestScore
     ? sortFindings(
         diagnoseScore(buildScoreInput(latestScore, song, userRange)),
       )
     : [];
+
+  // Aggregate advice from the whole history, focused on the current song.
+  const aggregateFindings = sortFindings(
+    diagnoseHistory(
+      buildHistoryInput(
+        aggregateData.scores,
+        aggregateData.songsById,
+        song.id,
+      ),
+    ),
+  );
 
   return (
     <div className="mx-auto max-w-3xl pb-6">
@@ -116,7 +132,12 @@ export default async function RepertoireDetailPage({
         />
       </div>
 
-      {latestScore && <AdviceSection findings={findings} />}
+      {(latestScore || aggregateFindings.length > 0) && (
+        <AdviceSection
+          findings={findings}
+          aggregateFindings={aggregateFindings}
+        />
+      )}
 
       <KeyRecommendation
         recommendation={keyRec}

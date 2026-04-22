@@ -244,6 +244,36 @@ Claude Code を使えば Phase 2-5 は大幅短縮可能。人間の判断が必
 - S2a: `diagnose-score.ts` orchestrator + sortFindings (severity > confidence > ruleId)
 - S4: UI (AdviceSection / FindingCard / SourceBadge / 曲詳細ページに統合)
 
+### 2026-04-22 続き 3: Advice S2c + S2d + S3 一気揃え
+
+#### ✅ 完了
+
+- **S2c** R08 24 区間音程弱点 (`pitch-segment-weakness.ts`) — 区間平均より 15+ ビハインドで発火、first-tie ブレーク、セクションフラグ付き
+- **S2d** R13 曲天井接近 (`song-ceiling.ts`) — `maxTotalPoints` との差 < 1.0 で info、low confidence、「DAM 非公開」disclaimer 含む
+- **S3 orchestrator** (`diagnose-history.ts`) + `ScoreHistoryInput` / `HistoryScorePoint` 型追加
+- **S3** R20 推奨キー (`key-recommendation-advice.ts`) — focusSongId 限定、既存 `recommendKey` を呼ぶラッパ
+- **S3** R21 伸び悩み項目 (`stagnant-axis.ts`) — 直近 5 回のレーダー平均、最弱軸と次点の差 ≥ 3 で warn
+- **S3** R22 同曲改善トレンド (`same-song-trend.ts`) — focusSongId 限定、直近 5 回 vs それ以前 5 回、±1 点以上で発火
+- **S3** R23 素点×ボーナス相関 (`base-bonus-correlation.ts`) — Pearson 係数 ≤ -0.3 で tip、Ai 限定 5+ サンプル
+- **S3** R24 得意曲 vs 苦手曲 (`song-gap.ts`) — per-song best_score の上位下位差 ≥ 10、曲数 ≥ 4 必要
+- UI: `AdviceSection` を拡張して単発 + 集計の 2 セクション表示、各独立 cap
+- `buildHistoryInput` helper + `lib/queries/advice.ts` の `getAggregateAdviceData`
+- 曲詳細ページに aggregate findings を統合 (`Promise.all` で並列取得)
+- 計 **216 テスト / 29 ファイル** 全緑 (183 → +33)
+
+#### ロードマップ消化
+
+- S2c / S2d / S3 全部完了 → 残るアドバイス系は S6 フィードバック収集のみ
+- R08 R13 R20 R21 R22 R23 R24 計 7 ルール追加 → **合計 17 ルール運用** (R08 R13 R20-R24 の全サブ合わせて)
+
+#### ⚠️ 既知の限界
+
+- R13 confidence=low のまま。複数曲のサンプル比較で maxTotalPoints 意味確定していない
+- R14 同様に confidence=low (B'01/B'10 の意味確定待ち)
+- R21 は直近 5 回固定。データ量が多くなったら 10 回 / 20 回の二段階表示も検討
+
+---
+
 ### 2026-04-22 続き: S2b 技法系ルール 6 本
 
 #### ✅ 完了
@@ -280,9 +310,6 @@ Claude Code を使えば Phase 2-5 は大幅短縮可能。人間の判断が必
 | 項目 | 想定工数 | ブロッカー |
 |---|---|---|
 | **歌唱詳細画面 `/scores/[id]`** (履歴 ScoreRow から遷移、レーダー・24 区間・全技法カウント・単発アドバイスを一画面に) | 2-2.5h | なし (既存 ScoreRadarChart / AdviceSection 流用可) |
-| Advice S2c 区間系 (R08 24 区間弱点) | 1h | なし |
-| Advice S2d 要検証系 (R13 maxTotalPoints) | 1.5h | maxTotalPoints 意味の別曲サンプル検証 |
-| Advice S3 集計診断 (R20-R24: recommendKey 統合、伸び悩み、改善トレンド、散布診断、得意→苦手転用) | 2h | S2a 済 |
 | Advice S6 フィードバック収集 (👍/👎 簡易 log → 閾値較正素材) | 2h | S4 済 |
 | Ai Heart 別エンドポイント調査 (`GetScoringHeartListXML.do` 仮称) | 不明 | 実機データアクセス |
 | GCM `shun19991214` 根本対処 (`git credential fill` 出力診断) | 15 分 | 未着手 |

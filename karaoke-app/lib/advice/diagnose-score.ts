@@ -16,10 +16,12 @@ import { evaluateIntonationCeiling } from "./rules/intonation-ceiling";
 import { evaluateKeyFitness } from "./rules/key-fitness";
 import { evaluateMelodySection } from "./rules/melody-section";
 import { evaluateNationalAverage } from "./rules/national-average";
+import { evaluatePitchSegmentWeakness } from "./rules/pitch-segment-weakness";
 import { evaluatePitchSweetSpot } from "./rules/pitch-sweet-spot";
 import { evaluateRadarWeakestAxis } from "./rules/radar-weakest-axis";
 import { evaluateRhythmTiming } from "./rules/rhythm-timing";
 import { evaluateScoreBonusSplit } from "./rules/score-bonus-split";
+import { evaluateSongCeiling } from "./rules/song-ceiling";
 import { evaluateTechniqueVariety } from "./rules/technique-variety";
 import { evaluateVibratoType } from "./rules/vibrato-type";
 import type { Finding, ScoreInput, Severity } from "./types";
@@ -34,10 +36,12 @@ const RULES: RuleFn[] = [
   evaluateVibratoType, // R05
   evaluateRhythmTiming, // R06
   evaluateTechniqueVariety, // R07
+  evaluatePitchSegmentWeakness, // R08
   evaluateKeyFitness, // R09
   evaluateHeartRouletteNote, // R10
   evaluateAiDeductSegment, // R11
   evaluateNationalAverage, // R12
+  evaluateSongCeiling, // R13
   evaluateMelodySection, // R14
 ];
 

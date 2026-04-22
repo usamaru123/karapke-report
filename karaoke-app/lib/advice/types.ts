@@ -70,3 +70,35 @@ export function makeFinding(partial: {
     ...partial,
   };
 }
+
+/**
+ * Slimmed-down per-score shape used by aggregate rules (S3). Only the fields
+ * rules actually aggregate — no raw_xml, since S3 doesn't pierce the blob.
+ * `sung_at` is carried so rules can reorder the history chronologically.
+ */
+export type HistoryScorePoint = {
+  id: string;
+  sung_at: string;
+  song_id: string;
+  song_title: string;
+  total_score: number;
+  pitch_score: number | null;
+  stability_score: number | null;
+  expression_score: number | null;
+  vibrato_longtone_score: number | null;
+  rhythm_score: number | null;
+  ai_bonus: number | null;
+  key_control: number;
+  scoring_type: ScoringType;
+};
+
+/**
+ * Input to every aggregate rule. The caller supplies the full scored history
+ * (unfiltered by song). Rules decide whether to work on all-history or
+ * same-song subsets as needed.
+ */
+export type ScoreHistoryInput = {
+  scores: HistoryScorePoint[];
+  /** Optional: narrow the aggregate advice to a specific song (repertoire page). */
+  focusSongId?: string;
+};

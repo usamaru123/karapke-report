@@ -9,6 +9,7 @@ import {
   type RepertoireFilter,
   type RepertoireSort,
 } from "@/lib/queries/repertoire";
+import { getUserVocalRange } from "@/lib/queries/user_range";
 
 const FILTERS: readonly RepertoireFilter[] = [
   "all",
@@ -44,9 +45,10 @@ export default async function RepertoirePage({
   const sort = parseSort(sp.sort);
   const q = (sp.q ?? "").trim();
 
-  const [items, addableSongs] = await Promise.all([
+  const [items, addableSongs, userRange] = await Promise.all([
     getRepertoire({ filter, sort, search: q || undefined }),
     getAddableScoredSongs(),
+    getUserVocalRange(),
   ]);
 
   return (
@@ -69,6 +71,7 @@ export default async function RepertoirePage({
 
       <RepertoireList
         items={items}
+        userRange={userRange}
         isSearch={q.length > 0}
         clearSearchHref="/repertoire"
       />

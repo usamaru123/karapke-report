@@ -2,13 +2,20 @@ import Link from "next/link";
 import { ConfidenceStars } from "@/components/ui/ConfidenceStars";
 import { KeyBadge } from "@/components/ui/KeyBadge";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
+import { VocalRangeBadge } from "@/components/ui/VocalRangeBadge";
 import { formatShortDate } from "@/lib/format";
 import type { RepertoireWithMeta } from "@/lib/queries/repertoire";
+import type { UserVocalRange } from "@/lib/queries/user_range";
+import { evaluateVocalRange } from "@/lib/vocal-range";
 
-type Props = { item: RepertoireWithMeta };
+type Props = { item: RepertoireWithMeta; userRange: UserVocalRange };
 
-export function RepertoireCard({ item }: Props) {
+export function RepertoireCard({ item, userRange }: Props) {
   const { song } = item;
+  const verdict = evaluateVocalRange(
+    { low: song.vocal_range_lowest, high: song.vocal_range_highest },
+    { low: userRange.low, high: userRange.high },
+  );
 
   return (
     <Link
@@ -41,6 +48,7 @@ export function RepertoireCard({ item }: Props) {
             </span>
           ))}
           <ConfidenceStars level={item.confidence} />
+          <VocalRangeBadge verdict={verdict} size="sm" />
         </div>
         <div className="shrink-0 text-[11px] text-white/50">
           最終歌唱: {formatShortDate(item.last_sung_at)}

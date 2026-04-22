@@ -8,6 +8,7 @@ import { ScoreSummaryCard } from "@/components/features/repertoire/detail/ScoreS
 import { SongInfoHero } from "@/components/features/repertoire/detail/SongInfoHero";
 import { VocalRangeBar } from "@/components/features/repertoire/detail/VocalRangeBar";
 import { getRepertoireDetail } from "@/lib/queries/repertoire";
+import { getUserVocalRange } from "@/lib/queries/user_range";
 
 export default async function RepertoireDetailPage({
   params,
@@ -27,6 +28,7 @@ export default async function RepertoireDetailPage({
     notFound();
   }
 
+  const userRange = await getUserVocalRange();
   const { repertoire, song, scores, stats } = detail;
   const latestScore = scores[0] ?? null;
   const recent10 = scores.slice(0, 10).map((s) => ({
@@ -89,8 +91,9 @@ export default async function RepertoireDetailPage({
         <VocalRangeBar
           songLow={song.vocal_range_lowest}
           songHigh={song.vocal_range_highest}
-          mineLow={latestScore?.singing_range_lowest ?? null}
-          mineHigh={latestScore?.singing_range_highest ?? null}
+          mineLow={userRange.low}
+          mineHigh={userRange.high}
+          sampleSize={userRange.sampleSize}
         />
       </div>
 

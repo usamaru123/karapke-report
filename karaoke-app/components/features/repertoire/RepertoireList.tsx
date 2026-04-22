@@ -1,14 +1,21 @@
 import { RepertoireCard } from "./RepertoireCard";
 import { EmptyState } from "./EmptyState";
 import type { RepertoireWithMeta } from "@/lib/queries/repertoire";
+import type { UserVocalRange } from "@/lib/queries/user_range";
 
 type Props = {
   items: RepertoireWithMeta[];
+  userRange: UserVocalRange;
   isSearch: boolean;
   clearSearchHref: string;
 };
 
-export function RepertoireList({ items, isSearch, clearSearchHref }: Props) {
+export function RepertoireList({
+  items,
+  userRange,
+  isSearch,
+  clearSearchHref,
+}: Props) {
   if (items.length === 0) {
     return (
       <EmptyState
@@ -21,7 +28,7 @@ export function RepertoireList({ items, isSearch, clearSearchHref }: Props) {
     <ul className="divide-y divide-white/10 border-t border-white/10">
       {items.map((item) => (
         <li key={item.id}>
-          <RepertoireCard item={item} />
+          <RepertoireCard item={item} userRange={userRange} />
         </li>
       ))}
     </ul>

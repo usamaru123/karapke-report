@@ -1,15 +1,21 @@
+import { VocalRangeBadge } from "@/components/ui/VocalRangeBadge";
 import {
   midiToNoteName,
   midiToPercent,
   RANGE_BAR_MAX_MIDI,
   RANGE_BAR_MIN_MIDI,
 } from "@/lib/midi";
+import { evaluateVocalRange } from "@/lib/vocal-range";
 
 type Props = {
   songLow: number | null;
   songHigh: number | null;
+  /** Aggregate min across user's score history. */
   mineLow: number | null;
+  /** Aggregate max across user's score history. */
   mineHigh: number | null;
+  /** Sample size (# scores contributing) — shown to temper the range with context. */
+  sampleSize?: number;
 };
 
 const LABEL_MIDI = [36, 48, 60, 72, 84]; // C2, C3, C4, C5, C6
@@ -52,16 +58,30 @@ function Bar({
   );
 }
 
-export function VocalRangeBar({ songLow, songHigh, mineLow, mineHigh }: Props) {
+export function VocalRangeBar({
+  songLow,
+  songHigh,
+  mineLow,
+  mineHigh,
+  sampleSize,
+}: Props) {
   const hasAny =
     (songLow !== null && songHigh !== null) ||
     (mineLow !== null && mineHigh !== null);
 
+  const verdict = evaluateVocalRange(
+    { low: songLow, high: songHigh },
+    { low: mineLow, high: mineHigh },
+  );
+
   return (
     <section className="px-4 py-2">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/50">
-        音域
-      </h3>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50">
+          音域
+        </h3>
+        <VocalRangeBadge verdict={verdict} size="md" />
+      </div>
       {!hasAny ? (
         <p className="text-sm text-white/60">
           未測定（歌うと自動で記録されます）
@@ -103,6 +123,11 @@ export function VocalRangeBar({ songLow, songHigh, mineLow, mineHigh }: Props) {
             </div>
             <span className="shrink-0 w-24" />
           </div>
+          {typeof sampleSize === "number" && sampleSize > 0 && (
+            <p className="pl-20 text-[10px] text-white/40">
+              自分の声域は過去 {sampleSize} 回の歌唱から推定
+            </p>
+          )}
         </div>
       )}
     </section>

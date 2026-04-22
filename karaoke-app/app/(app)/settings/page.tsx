@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { CardNoForm } from "@/components/features/settings/CardNoForm";
+import { SignOutButton } from "@/components/features/settings/SignOutButton";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
@@ -49,6 +50,16 @@ export default async function SettingsPage() {
 
         <div className="mt-4">
           <CardNoForm hasCardNo={hasCardNo} maskedSuffix={maskedSuffix} />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold text-white">アカウント</h2>
+        <p className="mt-1 text-xs text-white/60">
+          サインアウトすると次回アクセス時に再ログインが必要になります。
+        </p>
+        <div className="mt-3">
+          <SignOutButton />
         </div>
       </section>
     </div>

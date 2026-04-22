@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ConfidenceStars } from "@/components/ui/ConfidenceStars";
+import { ConfidenceQuickPick } from "@/components/features/repertoire/ConfidenceQuickPick";
 import { KeyBadge } from "@/components/ui/KeyBadge";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
 import { VocalRangeBadge } from "@/components/ui/VocalRangeBadge";
@@ -47,7 +47,11 @@ export function RepertoireCard({ item, userRange }: Props) {
               #{tag}
             </span>
           ))}
-          <ConfidenceStars level={item.confidence} />
+          <ConfidenceQuickPick
+            repertoireId={item.id}
+            initial={item.confidence}
+            size="sm"
+          />
           <VocalRangeBadge verdict={verdict} size="sm" />
         </div>
         <div className="shrink-0 text-[11px] text-white/50">

@@ -26,6 +26,7 @@ import type { RepertoireWithMeta } from "@/lib/queries/repertoire";
 import type { SetlistDetail, SetlistDetailItem } from "@/lib/queries/setlists";
 import { AddItemToSetlistButton } from "./AddItemToSetlistButton";
 import { BottomSummary } from "./BottomSummary";
+import { RandomFillButton } from "./RandomFillButton";
 import { SetlistHeader } from "./SetlistHeader";
 import { SortableSetlistItem } from "./SortableSetlistItem";
 
@@ -139,12 +140,13 @@ export function SetlistEditor({ setlist, repertoire }: Props) {
         )}
       </section>
 
-      <section className="mt-4">
+      <section className="mt-4 space-y-2">
         <AddItemToSetlistButton
           setlistId={setlist.id}
           repertoire={repertoire}
           alreadyInSetlist={alreadyInSetlist}
         />
+        <RandomFillButton setlistId={setlist.id} />
       </section>
 
       <BottomSummary items={items} />

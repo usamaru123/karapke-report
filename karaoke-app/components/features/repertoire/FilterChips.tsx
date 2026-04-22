@@ -19,6 +19,7 @@ const STATUS_CHIPS: Chip[] = [
 ];
 
 const GROUP_CHIPS: Chip[] = [
+  { key: "unset", label: "未設定" },
   { key: "wanna_sing", label: "歌いたい" },
   { key: "practicing", label: "練習中" },
   { key: "confident", label: "得意" },

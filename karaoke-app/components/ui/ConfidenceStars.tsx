@@ -7,6 +7,7 @@ type Props = { level: ConfidenceLevel };
  * Kept here in one place so a future enum extension / reorder is local.
  */
 const LEVEL_TO_FILLED: Record<ConfidenceLevel, number> = {
+  unset: 0,
   wanna_sing: 1,
   practicing: 2,
   normal: 3,
@@ -15,6 +16,7 @@ const LEVEL_TO_FILLED: Record<ConfidenceLevel, number> = {
 };
 
 const LEVEL_LABEL: Record<ConfidenceLevel, string> = {
+  unset: "未設定",
   wanna_sing: "歌いたい",
   practicing: "練習中",
   normal: "普通",

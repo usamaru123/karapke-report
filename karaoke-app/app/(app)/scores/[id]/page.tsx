@@ -11,6 +11,7 @@ import { KeyBadge } from "@/components/ui/KeyBadge";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
 import { buildScoreInput } from "@/lib/advice/build-score-input";
 import { diagnoseScore, sortFindings } from "@/lib/advice/diagnose-score";
+import { extractIntervalGraph } from "@/lib/advice/raw-xml-extract";
 import { formatKey } from "@/lib/format";
 import { getMyAdviceVotes } from "@/lib/queries/advice-feedback";
 import { getScoreDetail } from "@/lib/queries/scores";
@@ -48,6 +49,8 @@ export default async function ScoreDetailPage({
   const sungAt = new Date(score.sung_at);
   const num = (v: number | string | null) =>
     v === null ? null : Number(v);
+
+  const intervalGraph = extractIntervalGraph(score.raw_xml);
 
   return (
     <div className="mx-auto max-w-3xl pb-24 md:pb-6">
@@ -110,7 +113,10 @@ export default async function ScoreDetailPage({
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/50">
           24 区間音程
         </h3>
-        <PitchIntervalBars intervals={pitchIntervals} />
+        <PitchIntervalBars
+          intervals={pitchIntervals}
+          aiDeduct={intervalGraph.aiDeductPoints}
+        />
       </section>
 
       <section className="mx-4 mt-4 rounded-xl border border-white/10 bg-bg-surface p-3">

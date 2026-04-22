@@ -427,6 +427,7 @@ export type Database = {
     CompositeTypes: { [_ in never]: never };
     Enums: {
       confidence_level:
+        | "unset"
         | "wanna_sing"
         | "practicing"
         | "normal"

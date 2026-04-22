@@ -16,6 +16,7 @@ const FILTERS: readonly RepertoireFilter[] = [
   "over90",
   "recent",
   "favorite",
+  "unset",
   "wanna_sing",
   "practicing",
   "confident",

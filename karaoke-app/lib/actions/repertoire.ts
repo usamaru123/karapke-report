@@ -63,6 +63,7 @@ export async function updateRepertoireMeta(
   patch: {
     preferred_key?: number;
     confidence?:
+      | "unset"
       | "wanna_sing"
       | "practicing"
       | "normal"
@@ -77,6 +78,31 @@ export async function updateRepertoireMeta(
   const { error } = await supabase
     .from("repertoire")
     .update(patch)
+    .eq("id", repertoireId);
+  if (error) throw error;
+  revalidatePath("/repertoire");
+  revalidatePath(`/repertoire/${repertoireId}`);
+}
+
+/**
+ * One-shot setter for a repertoire row's confidence. Lightweight wrapper
+ * for the quick-pick dropdown on RepertoireCard — avoids re-validating the
+ * full meta patch shape.
+ */
+export async function setRepertoireConfidence(
+  repertoireId: string,
+  confidence:
+    | "unset"
+    | "wanna_sing"
+    | "practicing"
+    | "normal"
+    | "confident"
+    | "shelf",
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("repertoire")
+    .update({ confidence })
     .eq("id", repertoireId);
   if (error) throw error;
   revalidatePath("/repertoire");

@@ -65,6 +65,19 @@ async function ensureSession(
   return (data as { id: string }).id;
 }
 
+async function ensureRepertoireEntry(
+  supa: Supa,
+  userId: string,
+  songId: string,
+): Promise<void> {
+  const { error } = await supa
+    .from("repertoire")
+    .insert({ user_id: userId, song_id: songId, confidence: "unset" });
+  // 23505 = already in repertoire (unique on user_id + song_id).
+  // deno-lint-ignore no-explicit-any
+  if (error && (error as any).code !== "23505") throw error;
+}
+
 type UpsertScoreResult = "inserted" | "skipped";
 
 async function upsertScore(
@@ -169,8 +182,16 @@ export async function persistGroups(
         songId,
         score,
       );
-      if (result === "inserted") inserted++;
-      else skipped++;
+      if (result === "inserted") {
+        inserted++;
+        // Auto-create a repertoire row for any newly-sung song. confidence
+        // defaults to 'unset' so the user can triage the song into wanna_sing
+        // / practicing / etc. from the repertoire list. ON CONFLICT lets us
+        // ignore the already-registered case silently.
+        await ensureRepertoireEntry(supa, userId, songId);
+      } else {
+        skipped++;
+      }
     }
   }
 

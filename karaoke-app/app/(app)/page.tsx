@@ -1,6 +1,7 @@
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import { HeroCard } from "@/components/features/dashboard/HeroCard";
 import { KpiGrid } from "@/components/features/dashboard/KpiGrid";
+import { MonthlySummaryCard } from "@/components/features/dashboard/MonthlySummaryCard";
 import { OnboardingBanner } from "@/components/features/dashboard/OnboardingBanner";
 import { RecentScoreList } from "@/components/features/dashboard/RecentScoreList";
 import { SyncCard } from "@/components/features/dashboard/SyncCard";
@@ -9,6 +10,7 @@ import {
   getHeroBest,
   getRecentScores,
 } from "@/lib/queries/dashboard";
+import { getMonthlySummary } from "@/lib/queries/stats";
 import { createClient } from "@/lib/supabase/server";
 
 async function fetchProfile(): Promise<{
@@ -36,11 +38,12 @@ async function fetchProfile(): Promise<{
 }
 
 export default async function DashboardPage() {
-  const [summary, hero, recent, profile] = await Promise.all([
+  const [summary, hero, recent, profile, monthly] = await Promise.all([
     getDashboardSummary(),
     getHeroBest(),
     getRecentScores(5),
     fetchProfile(),
+    getMonthlySummary(),
   ]);
 
   const lastSungAt = recent[0]?.sung_at ?? null;
@@ -53,6 +56,7 @@ export default async function DashboardPage() {
       />
       {!profile.hasCardNo && <OnboardingBanner />}
       <HeroCard hero={hero} />
+      <MonthlySummaryCard summary={monthly} />
       <KpiGrid summary={summary} />
       <RecentScoreList scores={recent} />
       <SyncCard lastSyncAt={summary.lastSyncAt} />

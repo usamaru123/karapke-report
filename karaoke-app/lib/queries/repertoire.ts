@@ -4,6 +4,7 @@ import type { ConfidenceLevel, Repertoire, Score, Song } from "@/types/domain";
 // Confidence values exposed as filter chips. Typed as a const tuple so we get
 // a narrow union out of `includes()`.
 const CONFIDENCE_FILTERS = [
+  "unset",
   "wanna_sing",
   "practicing",
   "confident",

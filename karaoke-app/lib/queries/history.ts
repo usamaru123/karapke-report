@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Score, Session } from "@/types/domain";
+import type { Score, ScoringType, Session } from "@/types/domain";
 
 export type HistoryRange = "all" | "over90" | "over80" | "under80";
 export type HistorySort =
@@ -7,6 +7,7 @@ export type HistorySort =
   | "oldest"
   | "score_desc"
   | "score_asc";
+export type HistoryMachine = "any" | ScoringType;
 
 const RANGE_VALUES: readonly HistoryRange[] = [
   "all",
@@ -32,9 +33,38 @@ export function parseHistorySort(v: string | undefined): HistorySort {
     : "recent";
 }
 
+const MACHINE_VALUES: readonly HistoryMachine[] = [
+  "any",
+  "ai",
+  "ai_heart",
+  "dxg",
+  "dx",
+  "other",
+];
+
+export function parseHistoryMachine(v: string | undefined): HistoryMachine {
+  return (MACHINE_VALUES as readonly string[]).includes(v ?? "")
+    ? (v as HistoryMachine)
+    : "any";
+}
+
+/** Accept "YYYY-MM-DD" or empty. Returns null when invalid. */
+export function parseIsoDate(v: string | undefined): string | null {
+  if (!v) return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+}
+
+/** Accept integer strings in [0, 100]; clamp and return number or null. */
+export function parseScoreBound(v: string | undefined): number | null {
+  if (v === undefined || v === "") return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(0, Math.min(100, n));
+}
+
 export type HistoryScoreRow = Pick<
   Score,
-  "id" | "sung_at" | "total_score" | "key_control"
+  "id" | "sung_at" | "total_score" | "key_control" | "scoring_type"
 > & {
   song: { id: string; title: string; artist: string } | null;
 };
@@ -45,6 +75,16 @@ export async function getHistoryWithSessions(opts?: {
   range?: HistoryRange;
   sort?: HistorySort;
   search?: string;
+  /** "YYYY-MM-DD" (inclusive). null = no lower bound. */
+  dateFrom?: string | null;
+  /** "YYYY-MM-DD" (inclusive). null = no upper bound. */
+  dateTo?: string | null;
+  /** Inclusive min total_score, 0-100. null = unconstrained. */
+  scoreMin?: number | null;
+  /** Inclusive max total_score, 0-100. null = unconstrained. */
+  scoreMax?: number | null;
+  /** Scoring machine filter. "any" = no filter. */
+  machine?: HistoryMachine;
 }): Promise<HistorySession[]> {
   const supabase = await createClient();
 
@@ -54,7 +94,7 @@ export async function getHistoryWithSessions(opts?: {
       `
       *,
       scores:scores(
-        id, sung_at, total_score, key_control,
+        id, sung_at, total_score, key_control, scoring_type,
         song:songs(id, title, artist)
       )
     `,
@@ -67,6 +107,18 @@ export async function getHistoryWithSessions(opts?: {
   const q = opts?.search?.toLowerCase().trim() ?? "";
   const range = opts?.range ?? "all";
   const sort = opts?.sort ?? "recent";
+  const dateFromIso = opts?.dateFrom
+    ? new Date(`${opts.dateFrom}T00:00:00`).toISOString()
+    : null;
+  // `dateTo` is inclusive, so add 1 day and use half-open comparison.
+  const dateToIso = opts?.dateTo
+    ? new Date(
+        new Date(`${opts.dateTo}T00:00:00`).getTime() + 86_400_000,
+      ).toISOString()
+    : null;
+  const scoreMin = opts?.scoreMin ?? null;
+  const scoreMax = opts?.scoreMax ?? null;
+  const machine = opts?.machine ?? "any";
 
   const matchesRange = (total: number): boolean => {
     if (range === "over90") return total >= 90;
@@ -82,12 +134,33 @@ export async function getHistoryWithSessions(opts?: {
       s.song.artist.toLowerCase().includes(q)
     );
   };
+  const matchesDate = (sungAt: string): boolean => {
+    if (dateFromIso && sungAt < dateFromIso) return false;
+    if (dateToIso && sungAt >= dateToIso) return false;
+    return true;
+  };
+  const matchesScoreBounds = (total: number): boolean => {
+    if (scoreMin !== null && total < scoreMin) return false;
+    if (scoreMax !== null && total > scoreMax) return false;
+    return true;
+  };
+  const matchesMachine = (st: ScoringType | null): boolean => {
+    if (machine === "any") return true;
+    return st === machine;
+  };
 
   const out: HistorySession[] = [];
   for (const session of rows) {
-    const filtered = session.scores.filter(
-      (s) => matchesRange(Number(s.total_score)) && matchesQuery(s),
-    );
+    const filtered = session.scores.filter((s) => {
+      const total = Number(s.total_score);
+      return (
+        matchesRange(total) &&
+        matchesQuery(s) &&
+        matchesDate(s.sung_at) &&
+        matchesScoreBounds(total) &&
+        matchesMachine(s.scoring_type ?? null)
+      );
+    });
     if (filtered.length === 0) continue;
 
     // Score-level sort within the session — session-level ordering remains by sung_at.

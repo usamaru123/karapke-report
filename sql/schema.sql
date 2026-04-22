@@ -273,7 +273,10 @@ CREATE TABLE repertoire (
 
   -- User's personal preferences for this song
   preferred_key      SMALLINT NOT NULL DEFAULT 0,
-  confidence         confidence_level NOT NULL DEFAULT 'normal',
+  -- Default to 'unset' so rows auto-added by sync / bulk insert start
+  -- untagged; the user promotes them to wanna_sing / practicing / etc.
+  -- Migration 007 flipped this from 'normal' → 'unset' and reset existing rows.
+  confidence         confidence_level NOT NULL DEFAULT 'unset',
   tags               TEXT[] NOT NULL DEFAULT '{}',
   memo               TEXT,
 

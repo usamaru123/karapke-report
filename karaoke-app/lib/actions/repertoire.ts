@@ -48,9 +48,12 @@ export async function addToRepertoire(input: z.infer<typeof AddSongSchema>) {
   }
   if (!songId) throw new Error("songId or manual info required");
 
+  // Manually-added rows start as 'unset' so they appear under the "未設定"
+  // filter chip until the user tags them. Explicit even though the DB
+  // default is also 'unset' — keeps the intent readable at the call site.
   const { error: repErr } = await supabase
     .from("repertoire")
-    .insert({ user_id: user.id, song_id: songId });
+    .insert({ user_id: user.id, song_id: songId, confidence: "unset" });
   if (repErr) {
     if (repErr.code === "23505") throw new Error("すでに登録済みです");
     throw repErr;

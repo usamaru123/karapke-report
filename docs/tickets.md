@@ -156,7 +156,7 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 ## ✅ Done (直近 20 件)
 
 ### [PERF-SYNC-INCR] インクリメンタル同期で手動取り込みを高速化
-- Completed: 2026-04-22 / (next commit)
+- Completed: 2026-04-22 / Commit: `de619d0`
 - Labels: `PERF`, `edge-function`
 - 参照: `docs/tech-research/20260422-sync-performance.md`
 
@@ -167,7 +167,7 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 維持。`SyncResult` に `stopped_early` 追加。
 
 ### [FEAT-SETLIST-TEMPLATE] セトリテンプレ化
-- Completed: 2026-04-22 / (next commit)
+- Completed: 2026-04-22 / Commit: `3b04939`
 - Labels: `FEAT`, `DB-migration`
 
 migration 009 で `setlists.is_template BOOLEAN` + `setlists.template_source_id

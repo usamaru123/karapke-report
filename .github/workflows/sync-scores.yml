@@ -1,0 +1,61 @@
+name: Daily DAM Sync
+
+# Invoke the `sync-scores` Supabase Edge Function on a schedule so new
+# scoring results land in the DB without the user having to open the app.
+#
+# Required repository secrets:
+#   SUPABASE_URL              e.g. https://<project>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY the service_role key (sensitive; do NOT expose
+#                             it to the browser — this workflow runs server-
+#                             side only)
+#   TARGET_USER_ID            UUID of the user whose cdmCardNo should be
+#                             synced. MVP is single-user; a multi-user
+#                             rewrite would iterate over profiles on the
+#                             Supabase side instead and drop this secret.
+
+on:
+  schedule:
+    # Every day at 03:00 UTC (= 12:00 JST). cron timezones are UTC regardless
+    # of repo settings; keep the mapping comment accurate if this changes.
+    - cron: "0 3 * * *"
+  # Manual trigger for smoke-testing from the Actions tab.
+  workflow_dispatch:
+
+concurrency:
+  # Cancel the previous run if it's still ongoing when a new one fires.
+  group: sync-scores
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Invoke sync-scores Edge Function
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          USER_ID: ${{ secrets.TARGET_USER_ID }}
+        run: |
+          set -eu
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SERVICE_ROLE_KEY}" ] || [ -z "${USER_ID}" ]; then
+            echo "::error::Missing one of SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / TARGET_USER_ID"
+            exit 2
+          fi
+
+          # Capture response and status; curl --fail turns non-2xx into exit 22.
+          http_code=$(curl -sS -o /tmp/sync.out -w '%{http_code}' \
+            -X POST "${SUPABASE_URL}/functions/v1/sync-scores" \
+            -H "Authorization: Bearer ${SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"userId\":\"${USER_ID}\",\"trigger\":\"cron\"}")
+
+          echo "HTTP ${http_code}"
+          echo "--- response body ---"
+          cat /tmp/sync.out
+          echo
+
+          if [ "${http_code}" -lt 200 ] || [ "${http_code}" -ge 300 ]; then
+            echo "::error::Edge Function returned HTTP ${http_code}"
+            exit 1
+          fi

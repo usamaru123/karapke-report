@@ -120,6 +120,97 @@ export async function getMonthlyTrend(
   return out;
 }
 
+export type KpiTrendPoint = {
+  /** YYYY-MM */
+  month: string;
+  /** Repertoire size snapshot (cumulative; never decreases in practice). */
+  repertoireCount: number;
+  /** Score rows that month. */
+  totalScoreCount: number;
+  /** Average of total_score that month, or null when no scores. */
+  averageScore: number | null;
+  /** Songs that have reached >= 90 at least once up to month end. */
+  highScoreSongCount: number;
+};
+
+/**
+ * Per-month KPI trend for home KPI sparklines. We render tiny 6-point charts
+ * under each tile to make deltas legible at a glance.
+ *
+ * Implementation note: we join scores + repertoire once, then bucket in
+ * memory. At a few-hundred rows this is basically free.
+ */
+export async function getMonthlyKpiTrend(
+  monthsBack = 6,
+): Promise<KpiTrendPoint[]> {
+  const supabase = await createClient();
+  const now = new Date();
+  const windowStart = new Date(
+    now.getFullYear(),
+    now.getMonth() - (monthsBack - 1),
+    1,
+  );
+
+  const [{ data: scores, error: scoresErr }, { data: reps, error: repsErr }] =
+    await Promise.all([
+      supabase
+        .from("scores")
+        .select("song_id, sung_at, total_score"),
+      supabase.from("repertoire").select("added_at"),
+    ]);
+  if (scoresErr) throw scoresErr;
+  if (repsErr) throw repsErr;
+
+  const scoreRows = (scores ?? []).map((s) => ({
+    songId: s.song_id as string,
+    sungAt: s.sung_at as string,
+    total: Number(s.total_score),
+  }));
+  const repAddedAt = (reps ?? []).map((r) => r.added_at as string);
+
+  const out: KpiTrendPoint[] = [];
+  for (let i = 0; i < monthsBack; i++) {
+    const m = new Date(
+      windowStart.getFullYear(),
+      windowStart.getMonth() + i,
+      1,
+    );
+    const next = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+    const mIso = m.toISOString();
+    const nextIso = next.toISOString();
+
+    // In-month score rows
+    const inMonth = scoreRows.filter(
+      (r) => r.sungAt >= mIso && r.sungAt < nextIso,
+    );
+    const monthAvg = inMonth.length
+      ? inMonth.reduce((a, r) => a + r.total, 0) / inMonth.length
+      : null;
+
+    // Cumulative repertoire (added on or before month end)
+    const repCum = repAddedAt.filter((a) => a < nextIso).length;
+
+    // Songs that have hit 90+ by month end (first-ever 90 per song)
+    const bestBySong = new Map<string, number>();
+    for (const r of scoreRows) {
+      if (r.sungAt >= nextIso) continue;
+      const prev = bestBySong.get(r.songId) ?? -Infinity;
+      if (r.total > prev) bestBySong.set(r.songId, r.total);
+    }
+    let highCount = 0;
+    for (const v of bestBySong.values()) if (v >= 90) highCount++;
+
+    out.push({
+      month: m.toISOString().slice(0, 7),
+      repertoireCount: repCum,
+      totalScoreCount: inMonth.length,
+      averageScore: monthAvg,
+      highScoreSongCount: highCount,
+    });
+  }
+  return out;
+}
+
 export type TopSong = {
   song_id: string;
   title: string;

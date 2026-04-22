@@ -2,6 +2,7 @@ import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader
 import { HeroCard } from "@/components/features/dashboard/HeroCard";
 import { KpiGrid } from "@/components/features/dashboard/KpiGrid";
 import { MonthlySummaryCard } from "@/components/features/dashboard/MonthlySummaryCard";
+import { NextSessionBanner } from "@/components/features/dashboard/NextSessionBanner";
 import { OnboardingBanner } from "@/components/features/dashboard/OnboardingBanner";
 import { RecentScoreList } from "@/components/features/dashboard/RecentScoreList";
 import {
@@ -9,7 +10,8 @@ import {
   getHeroBest,
   getRecentScores,
 } from "@/lib/queries/dashboard";
-import { getMonthlySummary } from "@/lib/queries/stats";
+import { getNextScheduledSetlist } from "@/lib/queries/setlists";
+import { getMonthlyKpiTrend, getMonthlySummary } from "@/lib/queries/stats";
 import { createClient } from "@/lib/supabase/server";
 
 async function fetchProfile(): Promise<{
@@ -37,13 +39,16 @@ async function fetchProfile(): Promise<{
 }
 
 export default async function DashboardPage() {
-  const [summary, hero, recent, profile, monthly] = await Promise.all([
-    getDashboardSummary(),
-    getHeroBest(),
-    getRecentScores(5),
-    fetchProfile(),
-    getMonthlySummary(),
-  ]);
+  const [summary, hero, recent, profile, monthly, upcoming, kpiTrend] =
+    await Promise.all([
+      getDashboardSummary(),
+      getHeroBest(),
+      getRecentScores(5),
+      fetchProfile(),
+      getMonthlySummary(),
+      getNextScheduledSetlist(),
+      getMonthlyKpiTrend(6),
+    ]);
 
   const lastSungAt = recent[0]?.sung_at ?? null;
 
@@ -54,9 +59,10 @@ export default async function DashboardPage() {
         lastSungAt={lastSungAt}
       />
       {!profile.hasCardNo && <OnboardingBanner />}
+      <NextSessionBanner upcoming={upcoming} />
       <HeroCard hero={hero} />
       <MonthlySummaryCard summary={monthly} />
-      <KpiGrid summary={summary} />
+      <KpiGrid summary={summary} trend={kpiTrend} />
       <RecentScoreList scores={recent} />
     </div>
   );

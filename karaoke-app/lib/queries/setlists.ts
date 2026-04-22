@@ -54,6 +54,58 @@ export async function getSetlists(opts?: {
   });
 }
 
+export type UpcomingSetlist = {
+  id: string;
+  name: string;
+  scheduledFor: string;
+  /** Whole days from today (server-local). Negative means past. */
+  daysUntil: number;
+  itemCount: number;
+};
+
+/**
+ * Next upcoming scheduled setlist for the current user. Today counts as day 0.
+ * Returns null when nothing is scheduled in the future. Templates excluded.
+ */
+export async function getNextScheduledSetlist(): Promise<UpcomingSetlist | null> {
+  const supabase = await createClient();
+  // Compare against today's date (00:00 UTC boundary is close enough for our
+  // day-granularity UI; `scheduled_for` is stored as DATE).
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const { data, error } = await supabase
+    .from("setlists")
+    .select("id, name, scheduled_for, setlist_items(count)")
+    .eq("is_template", false)
+    .not("scheduled_for", "is", null)
+    .gte("scheduled_for", todayStr)
+    .order("scheduled_for", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data || !data.scheduled_for) return null;
+
+  const sched = new Date(`${data.scheduled_for}T00:00:00`);
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const daysUntil = Math.round(
+    (sched.getTime() - start.getTime()) / 86_400_000,
+  );
+
+  const itemCount = Array.isArray(data.setlist_items)
+    ? (data.setlist_items[0]?.count ?? 0)
+    : 0;
+
+  return {
+    id: data.id,
+    name: data.name,
+    scheduledFor: data.scheduled_for,
+    daysUntil,
+    itemCount,
+  };
+}
+
 export type SetlistDetailItem = Pick<
   SetlistItem,
   "id" | "position" | "key_override" | "note"

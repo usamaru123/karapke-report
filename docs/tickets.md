@@ -174,6 +174,16 @@ Phase 6+ 将来。Python ML 環境、別ワークストリーム。合法音源�
 
 ## ✅ Done (直近 20 件)
 
+### [BUG-CONFIDENCE-DEFAULT-UNSET] 新規曲 / デフォルト曲を 'unset' に統一
+- Completed: 2026-04-22 / Commit: `e2ab0ce`
+- Labels: `BUG`, `DATA`, `DB-migration`
+
+`addToRepertoire` が confidence を指定していなかったため DB DEFAULT の
+'normal' が入り、未設定フィルタに引っかからない問題。修正: schema.sql の
+DEFAULT を 'unset' に、migration 007 で既存 'normal' 行を全て 'unset'
+へリセット (ユーザー要望: 意図的 normal もリセットで OK)、
+`addToRepertoire` にも明示 `confidence: 'unset'` を追加。
+
 ### [BUG-REPERTOIRE-QUICKPICK-NAV] レパ一覧の confidence quick-pick で詳細遷移
 - Completed: 2026-04-22 / (next commit)
 - Labels: `BUG`, `UX`

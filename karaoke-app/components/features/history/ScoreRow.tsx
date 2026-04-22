@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import Link from "next/link";
 import { KeyBadge } from "@/components/ui/KeyBadge";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
 import type { HistoryScoreRow } from "@/lib/queries/history";
@@ -8,7 +9,10 @@ type Props = { score: HistoryScoreRow };
 export function ScoreRow({ score }: Props) {
   const time = format(new Date(score.sung_at), "HH:mm");
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5">
+    <Link
+      href={`/scores/${score.id}`}
+      className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.06] focus-visible:outline-none"
+    >
       <span className="w-12 shrink-0 font-mono text-xs text-white/40">
         {time}
       </span>
@@ -24,6 +28,6 @@ export function ScoreRow({ score }: Props) {
         </div>
       </div>
       <ScoreBadge value={score.total_score} size="sm" />
-    </div>
+    </Link>
   );
 }

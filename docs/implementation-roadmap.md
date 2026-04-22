@@ -244,6 +244,59 @@ Claude Code を使えば Phase 2-5 は大幅短縮可能。人間の判断が必
 - S2a: `diagnose-score.ts` orchestrator + sortFindings (severity > confidence > ruleId)
 - S4: UI (AdviceSection / FindingCard / SourceBadge / 曲詳細ページに統合)
 
+### 2026-04-22 続き 5: 改修まち一気消化 (/scores/[id] + S6 + GCM + sslVerify + 良音対応)
+
+#### ✅ 完了
+
+**歌唱詳細画面 `/scores/[id]`**
+- `lib/queries/scores.ts` `getScoreDetail` (score + song + 24 区間 pitch intervals)
+- `components/features/scores/PitchIntervalBars.tsx` (CSS のみ 24 本バー、最弱区間ハイライト)
+- `components/features/scores/TechniqueCountGrid.tsx` (8 技法グリッド、null は dim)
+- 新ルート `app/(app)/scores/[id]/page.tsx` (+ not-found.tsx) — レーダー + 24 区間 + 技法 + 単発アドバイス を 1 ページで表示
+- `/history` の `ScoreRow` を `<Link href="/scores/[id]">` でラップ → 履歴タップで遷移可能に
+- 曲詳細 (`/repertoire/[id]`) は **集計傾向** (ロバスト統計)、歌唱詳細 (`/scores/[id]`) は **単発スコアそのまま** で棲み分け
+
+**Advice S6 フィードバック収集**
+- `sql/migrations/005_advice_feedback.sql` + `schema.sql` に `advice_feedback` テーブル追加 (user_id+rule_id PK、vote ±1、RLS policy 4 種)
+- `lib/actions/advice-feedback.ts` (`setAdviceVote` / `clearAdviceVote` server action)
+- `lib/queries/advice-feedback.ts` (`getMyAdviceVotes` → Map<ruleId, ±1>)
+- `components/features/advice/FeedbackButtons.tsx` (Client, useTransition + 楽観的 UI + 同方向再押下で clear)
+- `FindingCard` + `AdviceSection` に `vote` prop 追加、両詳細ページで `getMyAdviceVotes()` を並列取得して注入
+
+**運用クリーンアップ**
+- GCM 根本原因特定: `.gitconfig` に `credential.https://github.com.helper=!'...gh.exe' auth git-credential` が設定され、gh CLI が `shun19991214` として認証を返していた
+- `git config --global --unset-all credential.https://github.com.helper` で解除 → 次回 push は manager 経由で正しい `usamaru123` を使う
+- `git config --global --unset http.sslVerify` で TLS 検証無効化も解除
+- CLAUDE.md の GCM 対処セクションを「解決済」に更新
+
+**版違い統合の拡張 (004)**
+- `[...]` / `［...］` 角括弧デリミタも対応
+- `良音` をマーカーに追加
+- `sql/migrations/004_strip_good_sound_and_brackets.sql` で既存行を再マージ
+- 対応テスト 3 件追加 (square brackets, mixed, 良音)
+
+#### テスト / ビルド
+
+- 全体 **243 テスト / 31 ファイル** 全緑 (240 → +3)
+- ルート数 17 → 18 (`/scores/[id]` 追加)
+
+#### ⚠️ ユーザー側で必要な手動作業
+
+- `sql/migrations/005_advice_feedback.sql` を Supabase SQL Editor で実行 (S6 テーブル作成 + RLS)。未実行でも UI は動く (`getMyAdviceVotes` が空 Map を返すのでバッジ無状態)
+- migration 002, 003, 004 実行済 ✅ (005 のみ未)
+
+#### ロードマップ消化
+
+- 歌唱詳細画面 ✅
+- Advice S6 フィードバック収集 ✅
+- GCM 根本対処 ✅
+- sslVerify 解除 ✅
+- 良音対応 ✅ (予定外追加)
+
+残: Ai Heart endpoint 調査 / 月次サマリ / セトリテンプレ / オススメ曲 / 24 区間ピッチグラフ UI リッチ化 / Phase 6+ 将来機能
+
+---
+
 ### 2026-04-22 続き 4: レパートリー UX 改善 4 件
 
 #### ✅ 完了

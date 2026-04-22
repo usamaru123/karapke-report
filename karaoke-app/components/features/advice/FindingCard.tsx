@@ -1,8 +1,13 @@
 import { AlertTriangle, Info, Lightbulb } from "lucide-react";
 import type { Finding, Severity } from "@/lib/advice/types";
+import { FeedbackButtons } from "./FeedbackButtons";
 import { SourceBadge } from "./SourceBadge";
 
-type Props = { finding: Finding };
+type Props = {
+  finding: Finding;
+  /** User's existing thumbs vote for this rule, if any. */
+  vote?: 1 | -1 | null;
+};
 
 const SEVERITY_VISUAL: Record<
   Severity,
@@ -38,7 +43,7 @@ function formatMetricValue(v: number): string {
   return v.toFixed(2).replace(/\.?0+$/, "");
 }
 
-export function FindingCard({ finding }: Props) {
+export function FindingCard({ finding, vote = null }: Props) {
   const visual = SEVERITY_VISUAL[finding.severity];
   const Icon = visual.icon;
   const metricEntries = Object.entries(finding.metrics);
@@ -58,6 +63,12 @@ export function FindingCard({ finding }: Props) {
               source={finding.source}
               confidence={finding.confidence}
             />
+            <span className="ml-auto">
+              <FeedbackButtons
+                ruleId={finding.ruleId}
+                initialVote={vote}
+              />
+            </span>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-white/80">
             {finding.message}

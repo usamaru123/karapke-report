@@ -15,6 +15,7 @@ import { diagnoseHistory } from "@/lib/advice/diagnose-history";
 import { diagnoseScore, sortFindings } from "@/lib/advice/diagnose-score";
 import { recommendKey } from "@/lib/key-recommendation";
 import { getAggregateAdviceData } from "@/lib/queries/advice";
+import { getMyAdviceVotes } from "@/lib/queries/advice-feedback";
 import { getRepertoireDetail } from "@/lib/queries/repertoire";
 import { getUserVocalRange } from "@/lib/queries/user_range";
 
@@ -36,9 +37,10 @@ export default async function RepertoireDetailPage({
     notFound();
   }
 
-  const [userRange, aggregateData] = await Promise.all([
+  const [userRange, aggregateData, votes] = await Promise.all([
     getUserVocalRange(),
     getAggregateAdviceData(),
+    getMyAdviceVotes(),
   ]);
   const { repertoire, song, scores, stats } = detail;
   const latestScore = scores[0] ?? null;
@@ -139,6 +141,7 @@ export default async function RepertoireDetailPage({
         <AdviceSection
           findings={findings}
           aggregateFindings={aggregateFindings}
+          votes={votes}
         />
       )}
 

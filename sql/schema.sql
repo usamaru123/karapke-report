@@ -246,6 +246,23 @@ CREATE INDEX pitch_intervals_user ON score_pitch_intervals (user_id);
 
 
 -- ============================================================================
+-- TABLE: advice_feedback
+-- 👍 / 👎 votes on advice rules. S6 material for threshold calibration.
+-- See sql/migrations/005_advice_feedback.sql for the add-to-existing-DB
+-- migration (IF NOT EXISTS).
+-- ============================================================================
+CREATE TABLE advice_feedback (
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  rule_id    TEXT NOT NULL,            -- e.g. "R01.bonus_diminishing"
+  vote       SMALLINT NOT NULL,        -- +1 = useful, -1 = not useful
+  note       TEXT,                     -- reserved for free-form feedback
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT advice_feedback_pkey PRIMARY KEY (user_id, rule_id),
+  CONSTRAINT advice_feedback_vote_range CHECK (vote IN (-1, 1))
+);
+
+
+-- ============================================================================
 -- TABLE: repertoire
 -- User's repertoire entries (a curated subset of songs with personal metadata)
 -- ============================================================================
@@ -463,6 +480,16 @@ ALTER TABLE repertoire            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE setlists              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE setlist_items         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_logs             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE advice_feedback       ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY advice_feedback_owner_select ON advice_feedback
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY advice_feedback_owner_insert ON advice_feedback
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY advice_feedback_owner_update ON advice_feedback
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY advice_feedback_owner_delete ON advice_feedback
+  FOR DELETE USING (auth.uid() = user_id);
 
 -- songs is intentionally RLS-off: it's a shared catalog, no sensitive data.
 -- If that changes, consider per-user song entries.

@@ -12,6 +12,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      advice_feedback: {
+        Row: {
+          user_id: string
+          rule_id: string
+          vote: number
+          note: string | null
+          updated_at: string
+        };
+        Insert: {
+          user_id: string
+          rule_id: string
+          vote: number
+          note?: string | null
+          updated_at?: string
+        };
+        Update: {
+          user_id?: string
+          rule_id?: string
+          vote?: number
+          note?: string | null
+          updated_at?: string
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string

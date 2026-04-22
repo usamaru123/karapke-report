@@ -10,6 +10,11 @@ type Props = {
    * or empty, the aggregate subsection is omitted entirely.
    */
   aggregateFindings?: Finding[];
+  /**
+   * The caller's existing 👍/👎 votes keyed by ruleId. Optional — when absent
+   * the thumbs buttons render in "no-vote" state but remain interactive.
+   */
+  votes?: Map<string, 1 | -1>;
   /** Upper bound on displayed single-score findings. Defaults to 5. */
   limit?: number;
   /** Upper bound on displayed aggregate findings. Defaults to 3. */
@@ -24,6 +29,7 @@ type Props = {
 export function AdviceSection({
   findings,
   aggregateFindings = [],
+  votes,
   limit = 5,
   aggregateLimit = 3,
 }: Props) {
@@ -31,6 +37,9 @@ export function AdviceSection({
   const hidden = findings.length - shown.length;
   const shownAgg = aggregateFindings.slice(0, aggregateLimit);
   const hiddenAgg = aggregateFindings.length - shownAgg.length;
+
+  const voteOf = (ruleId: string): 1 | -1 | null =>
+    votes?.get(ruleId) ?? null;
 
   return (
     <section className="mx-4 mt-4 rounded-xl border border-white/10 bg-bg-surface p-3">
@@ -46,7 +55,7 @@ export function AdviceSection({
       ) : (
         <div className="space-y-2">
           {shown.map((f) => (
-            <FindingCard key={f.ruleId} finding={f} />
+            <FindingCard key={f.ruleId} finding={f} vote={voteOf(f.ruleId)} />
           ))}
           {hidden > 0 && (
             <p className="pt-1 text-center text-[10px] text-white/40">
@@ -64,7 +73,7 @@ export function AdviceSection({
           </h3>
           <div className="space-y-2">
             {shownAgg.map((f) => (
-              <FindingCard key={f.ruleId} finding={f} />
+              <FindingCard key={f.ruleId} finding={f} vote={voteOf(f.ruleId)} />
             ))}
             {hiddenAgg > 0 && (
               <p className="pt-1 text-center text-[10px] text-white/40">

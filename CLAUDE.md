@@ -20,17 +20,17 @@ Pre-push 4 コマンド（`karaoke-app/` で）: `npm run type-check && npm run 
 
 コミット: **英語、conventional prefix なし**、既存ログ `git log --oneline` のスタイルを踏襲。1 コミット 1 目的。
 
-### Push 認証の罠（Windows GCM）
+### Push 認証
 
-`403 denied to shun19991214` で拒否される場合、root `.env` の `GITHUB_TOKEN` を埋めて push:
+2026-04-22 に GH CLI の誤 account 認証を解除済 (`git config --global --unset-all credential.https://github.com.helper`)。通常の GCM (manager) 経由で `usamaru123` + PAT 入力プロンプトが出るはず。
+
+もし過去のワークフローに戻したい場合、root `.env` の `GITHUB_TOKEN` を使った URL 埋め込み方式も動く:
 
 ```bash
 TOKEN=$(grep '^GITHUB_TOKEN=' ".env" | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '\r' | tr -d ' ')
 git push "https://usamaru123:${TOKEN}@github.com/usamaru123/karapke-report.git" main
 unset TOKEN
 ```
-
-根本対処は Progress Log 未着手側で追跡中。
 
 ## Vercel で自動化されないもの
 

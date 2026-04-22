@@ -377,7 +377,26 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      get_cdm_card_no_for: {
+        Args: {
+          p_user_id: string;
+        };
+        Returns: string;
+      };
+      refresh_session_stats: {
+        Args: {
+          p_session_id: string;
+        };
+        Returns: undefined;
+      };
+      set_my_cdm_card_no: {
+        Args: {
+          p_card_no: string;
+        };
+        Returns: undefined;
+      };
+    };
     CompositeTypes: { [_ in never]: never };
     Enums: {
       confidence_level: "practicing" | "normal" | "confident";

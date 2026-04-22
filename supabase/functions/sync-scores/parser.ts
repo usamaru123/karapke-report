@@ -4,6 +4,41 @@
  * docs/data-model.md and the parser.py fixes commit).
  */
 
+// Mirror of karaoke-app/lib/song-title.ts `stripVersionMarkers`.
+// Keep the MARKERS list in sync with the app-side source of truth; Deno and
+// Next TS can't share code directly across runtimes.
+const VERSION_MARKERS = [
+  "プロオケ",
+  "生音",
+  "ガイドメロディ",
+  "ガイド",
+  "オリジナル",
+  "Original",
+  "Original Karaoke",
+  "Karaoke",
+  "Live",
+  "ライブ",
+  "アコースティック",
+  "Acoustic",
+  "Remix",
+  "Instrumental",
+  "Inst",
+  "カバー",
+  "Cover",
+];
+function stripVersionMarkers(title: string): string {
+  let out = title;
+  for (const marker of VERSION_MARKERS) {
+    const escaped = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(
+      `\\s*[\\(（]\\s*${escaped}\\s*[\\)）]`,
+      "gi",
+    );
+    out = out.replace(pattern, "");
+  }
+  return out.trim();
+}
+
 export type ScoringTypeT =
   | "ai"
   | "ai_heart"
@@ -131,10 +166,14 @@ export function parseScoringElement(
     );
   }
 
-  const song_title =
+  const rawTitle =
     attr(el, "contentsName") ??
     attr(el, "songName") ??
     "(unknown)";
+  // Strip DAM version markers like "(プロオケ)", "(生音)" so that the same
+  // song across different mixes dedupes to one `songs` row. Kept identical
+  // to karaoke-app/lib/song-title.ts `stripVersionMarkers`.
+  const song_title = stripVersionMarkers(rawTitle);
   const song_artist = attr(el, "artistName") ?? "(unknown)";
 
   // Total score lives in the element's text content. fast-xml-parser with

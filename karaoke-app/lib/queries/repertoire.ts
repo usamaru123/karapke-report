@@ -1,7 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Repertoire, Score, Song } from "@/types/domain";
+import type { ConfidenceLevel, Repertoire, Score, Song } from "@/types/domain";
 
-export type RepertoireFilter = "all" | "over90" | "recent" | "favorite";
+// Confidence values exposed as filter chips. Typed as a const tuple so we get
+// a narrow union out of `includes()`.
+const CONFIDENCE_FILTERS = [
+  "wanna_sing",
+  "practicing",
+  "confident",
+  "shelf",
+] as const satisfies readonly ConfidenceLevel[];
+type ConfidenceFilter = (typeof CONFIDENCE_FILTERS)[number];
+function isConfidenceFilter(v: string): v is ConfidenceFilter {
+  return (CONFIDENCE_FILTERS as readonly string[]).includes(v);
+}
+
+export type RepertoireFilter =
+  | "all"
+  | "over90"
+  | "recent"
+  | "favorite"
+  | ConfidenceFilter;
 export type RepertoireSort = "best_score" | "recent" | "title" | "added";
 
 export type RepertoireWithMeta = Repertoire & {
@@ -27,6 +45,8 @@ export async function getRepertoire(opts?: {
 
   if (opts?.filter === "favorite") {
     query = query.eq("is_favorite", true);
+  } else if (opts?.filter && isConfidenceFilter(opts.filter)) {
+    query = query.eq("confidence", opts.filter);
   }
 
   const { data, error } = await query;

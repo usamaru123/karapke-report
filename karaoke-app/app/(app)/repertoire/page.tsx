@@ -16,6 +16,10 @@ const FILTERS: readonly RepertoireFilter[] = [
   "over90",
   "recent",
   "favorite",
+  "wanna_sing",
+  "practicing",
+  "confident",
+  "shelf",
 ];
 const SORTS: readonly RepertoireSort[] = [
   "best_score",

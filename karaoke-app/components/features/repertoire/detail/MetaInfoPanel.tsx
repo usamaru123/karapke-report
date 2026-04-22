@@ -13,9 +13,11 @@ type Props = {
 };
 
 const CONFIDENCE_OPTIONS: { value: ConfidenceLevel; label: string }[] = [
+  { value: "wanna_sing", label: "歌いたい" },
   { value: "practicing", label: "練習中" },
   { value: "normal", label: "普通" },
   { value: "confident", label: "得意" },
+  { value: "shelf", label: "封印" },
 ];
 
 export function MetaInfoPanel({ repertoire, editing }: Props) {

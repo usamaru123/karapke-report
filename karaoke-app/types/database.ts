@@ -402,7 +402,12 @@ export type Database = {
     };
     CompositeTypes: { [_ in never]: never };
     Enums: {
-      confidence_level: "practicing" | "normal" | "confident";
+      confidence_level:
+        | "wanna_sing"
+        | "practicing"
+        | "normal"
+        | "confident"
+        | "shelf";
       range_source: "dam_ai" | "audio_analysis" | "manual";
       scoring_type: "ai" | "ai_heart" | "dxg" | "dx" | "other";
     };

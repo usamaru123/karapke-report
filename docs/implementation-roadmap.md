@@ -244,6 +244,52 @@ Claude Code を使えば Phase 2-5 は大幅短縮可能。人間の判断が必
 - S2a: `diagnose-score.ts` orchestrator + sortFindings (severity > confidence > ruleId)
 - S4: UI (AdviceSection / FindingCard / SourceBadge / 曲詳細ページに統合)
 
+### 2026-04-22 続き 4: レパートリー UX 改善 4 件
+
+#### ✅ 完了
+
+**⑤ ScoreBadge 5 段階色分け** (`components/ui/ScoreBadge.tsx`)
+- 98+ ゴールド+glow (Heart ルーレット帯) / 95-98 neon-pink 強 / 90-95 neon-pink / 80-90 white / <80 dimmed
+- `.neon-text-amber` utility を `globals.css` に追加
+
+**① アドバイス入力をロバスト統計ベースに変更**
+- `lib/advice/robust-stats.ts` (trimmedMean / median / takeRecent、3 ファイル)
+- `lib/advice/build-robust-score-input.ts` — 直近 10 件同曲スコアを 25% トリム平均で集約、ScoreInput に投入
+- 曲詳細ページは `buildScoreInput` (最新 1 件) → `buildRobustScoreInput` (直近傾向) に切替
+- AdviceSection タイトルを「(この歌唱)」→「(直近 10 回の傾向)」に変更
+- **単発の外れ値で findings がブレなくなる** — ユーザー要望の通り
+
+**② confidence_level enum 拡張** (提案 B 採用)
+- 5 値に拡張: `wanna_sing` / `practicing` / `normal` / `confident` / `shelf` (★ 1-5)
+- `sql/migrations/002_confidence_level_expand.sql` (冪等、`ALTER TYPE ADD VALUE` を IF NOT EXISTS でガード)
+- `ConfidenceStars` は 5 段階 ★ 表示に切替 + `CONFIDENCE_LABELS` export
+- `MetaInfoPanel` 編集 UI も 5 ボタン選択に対応
+- **レパ一覧にグルーピング用 filter chips 2 段目追加** (歌いたい/練習中/得意/封印、既存「すべて/90+/最近歌ってない/お気に入り」の下段に)
+- `getRepertoire` の `filter` パラメータを confidence 値も受けるよう拡張 (型安全な `isConfidenceFilter` 絞り込み)
+
+**③ 曲版違い統合 ((プロオケ)/(生音) 等)**
+- `lib/song-title.ts` (純関数 `stripVersionMarkers` / `canonicalTitleKey`、16 種マーカー対応、全半角カッコ両対応)
+- Edge Function `parser.ts` に同等ロジックを複製 (Deno/Next 間で共有不可のため)、`song_title = stripVersionMarkers(contentsName)` として upsert
+- 手動追加アクション (`addToRepertoire`) も `manualTitle` を正規化してから upsert
+- **既存 200 件のマージは `sql/migrations/003_merge_song_versions.sql`** に dry-run SECTION + 実行 SECTION を分離して記述。ユーザーが SQL Editor で段階適用する前提 (destructive 操作なので自動実行せず)
+
+#### テスト
+
+- 追加 3 ファイル: `robust-stats.test.ts` / `song-title.test.ts`
+- 全体 **240 テスト / 31 ファイル** 全緑 (216 → +24)
+
+#### ⚠️ 未着手 / ブロック中 更新
+
+- ④ confidence 自動判定バッジは skip (ユーザー手動設定を上書きするリスクの懸念、提案時点で低優先 `任意` 扱い)
+- マイグレーション 002 / 003 はユーザーが Supabase SQL Editor で手動実行する必要 (適用前)
+
+#### ロードマップ消化
+
+- "歌唱詳細画面 `/scores/[id]`" は未着手のまま
+- `maxTotalPoints` 意味確定、Ai Heart 別エンドポイント調査、GCM 根本対処も未着手
+
+---
+
 ### 2026-04-22 続き 3: Advice S2c + S2d + S3 一気揃え
 
 #### ✅ 完了

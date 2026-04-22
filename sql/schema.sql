@@ -18,11 +18,17 @@ CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA vault;
 -- ENUMs
 -- ============================================================================
 
--- Confidence level for a repertoire song
+-- Confidence level / workflow stage for a repertoire song.
+-- Ordered conceptually from "I want to try this" through "I've mastered it",
+-- plus a "shelved" terminal state for songs the user has put aside.
+-- See sql/migrations/002_confidence_level_expand.sql for the ADD VALUE steps
+-- applied to an existing DB.
 CREATE TYPE confidence_level AS ENUM (
-  'practicing',  -- 練習中 (★☆☆)
-  'normal',      -- 普通   (★★☆)
-  'confident'    -- 得意   (★★★)
+  'wanna_sing',  -- 歌いたい (★☆☆☆☆) — まだ未挑戦 / 挑戦予定
+  'practicing',  -- 練習中   (★★☆☆☆)
+  'normal',      -- 普通     (★★★☆☆)
+  'confident',   -- 得意     (★★★★☆)
+  'shelf'        -- 封印     (★★★★★ — 使わない / 保留)
 );
 
 -- Source of vocal range data (for future multi-source support)

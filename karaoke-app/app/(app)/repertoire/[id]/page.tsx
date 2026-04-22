@@ -10,7 +10,7 @@ import { ScoreSummaryCard } from "@/components/features/repertoire/detail/ScoreS
 import { SongInfoHero } from "@/components/features/repertoire/detail/SongInfoHero";
 import { VocalRangeBar } from "@/components/features/repertoire/detail/VocalRangeBar";
 import { buildHistoryInput } from "@/lib/advice/build-history-input";
-import { buildScoreInput } from "@/lib/advice/build-score-input";
+import { buildRobustScoreInput } from "@/lib/advice/build-robust-score-input";
 import { diagnoseHistory } from "@/lib/advice/diagnose-history";
 import { diagnoseScore, sortFindings } from "@/lib/advice/diagnose-score";
 import { recommendKey } from "@/lib/key-recommendation";
@@ -53,11 +53,14 @@ export default async function RepertoireDetailPage({
     })),
   );
 
-  // Single-score advice for the latest score.
-  const findings = latestScore
-    ? sortFindings(
-        diagnoseScore(buildScoreInput(latestScore, song, userRange)),
-      )
+  // Single-score advice — aggregated over the user's recent ~10 same-song
+  // attempts via trimmed mean so that a single outlier session doesn't flip
+  // every rule's finding. Old behaviour (latest-only) lives at
+  // buildScoreInput; swap back if we want per-session diagnosis on a future
+  // /scores/[id] route.
+  const robustInput = buildRobustScoreInput(scores, song, userRange);
+  const findings = robustInput
+    ? sortFindings(diagnoseScore(robustInput))
     : [];
 
   // Aggregate advice from the whole history, focused on the current song.

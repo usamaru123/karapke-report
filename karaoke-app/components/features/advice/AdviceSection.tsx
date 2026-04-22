@@ -36,7 +36,7 @@ export function AdviceSection({
     <section className="mx-4 mt-4 rounded-xl border border-white/10 bg-bg-surface p-3">
       <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
         <Sparkles size={12} />
-        アドバイス (この歌唱)
+        アドバイス (直近 10 回の傾向)
       </h3>
 
       {shown.length === 0 ? (

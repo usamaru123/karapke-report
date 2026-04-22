@@ -40,3 +40,9 @@ body {
 .neon-text-cyan {
   text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
 }
+
+.neon-text-amber {
+  text-shadow:
+    0 0 12px rgba(255, 179, 0, 0.7),
+    0 0 24px rgba(255, 179, 0, 0.35);
+}

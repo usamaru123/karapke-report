@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { stripVersionMarkers } from "@/lib/song-title";
 import { createClient } from "@/lib/supabase/server";
 
 const AddSongSchema = z
@@ -27,11 +28,14 @@ export async function addToRepertoire(input: z.infer<typeof AddSongSchema>) {
   let songId = data.songId;
 
   if (!songId && data.manualTitle && data.manualArtist) {
+    // Strip DAM-style version markers so "ビンテージ (プロオケ)" and "ビンテージ"
+    // collapse onto the same song row. See lib/song-title.ts.
+    const cleanedTitle = stripVersionMarkers(data.manualTitle);
     const { data: newSong, error } = await supabase
       .from("songs")
       .upsert(
         {
-          title: data.manualTitle,
+          title: cleanedTitle,
           artist: data.manualArtist,
           request_no: data.manualRequestNo,
         },
@@ -58,7 +62,12 @@ export async function updateRepertoireMeta(
   repertoireId: string,
   patch: {
     preferred_key?: number;
-    confidence?: "practicing" | "normal" | "confident";
+    confidence?:
+      | "wanna_sing"
+      | "practicing"
+      | "normal"
+      | "confident"
+      | "shelf";
     tags?: string[];
     memo?: string | null;
     is_favorite?: boolean;
